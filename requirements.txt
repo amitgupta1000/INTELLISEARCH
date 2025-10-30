@@ -1,0 +1,51 @@
+# requirements.txt
+# Pinned dependencies for INTELLISEARCH (stable, minimal set).
+# Adjust versions if you need compatibility with a specific environment.
+# Use a virtual environment before installing these.
+
+# Core libraries
+requests>=2.31.0
+requests-html>=0.10.0
+python-dotenv>=1.0.0
+pydantic>=2.8.0
+aiohttp>=3.9.0
+beautifulsoup4>=4.12.2
+lxml>=5.0.0
+nest_asyncio>=1.5.6
+ratelimit>=2.2.1
+
+# LangChain / LLM integration
+# Use a LangChain compatible version
+langchain>=0.1.0
+
+# LangGraph workflow engine
+langgraph>=0.1.0
+
+# Embeddings / vector DB / retrieval
+chromadb>=0.4.0
+# FAISS often requires platform wheels or conda; see SETUP.md for instructions
+faiss-cpu>=1.7.4
+
+# PDF and document handling
+pymupdf>=1.23.0
+pypdf>=4.0.0
+trafilatura>=1.7.2
+fpdf2>=2.8.0
+
+# Ranking helper used in utils
+rank_bm25==0.2.2
+
+# Optional / provider SDKs (uncomment if you need them)
+google-genai>=1
+langchain-google-genai>=1.0.0
+anthropic>=0.25.0
+together>=1.0.0
+voyageai>=0.2.0
+
+# Developer tooling (optional)
+rich>=13.3.4
+pytest>=7.4.0
+
+# Notes:
+# - Some packages (faiss-cpu, certain langchain integrations) may require special install steps on Windows.
+# - If a package fails to install with pip on your platform, see the instructions in SETUP.md (conda/alternate wheels).
