@@ -69,7 +69,7 @@ INTELLISEARCH/
    - **Name**: `intellisearch-frontend`
    - **Root Directory**: `web-app/frontend`
    - **Build Command**: `npm install --legacy-peer-deps && npm run build`
-   - **Publish Directory**: `dist`
+   - **Publish Directory**: `build`
 
 3. **Set Environment Variables**
    - Add this environment variable:
