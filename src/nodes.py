@@ -1344,6 +1344,43 @@ researcher_instruction = (
 )
 #=============================================================================================
 
+def deduplicate_content(text: str) -> str:
+    """
+    Remove duplicate sentences and similar content from the report to reduce repetition.
+    """
+    import re
+    
+    # Split into sentences
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    unique_sentences = []
+    seen_content = set()
+    
+    for sentence in sentences:
+        # Clean and normalize the sentence for comparison
+        cleaned = re.sub(r'\s+', ' ', sentence.strip().lower())
+        cleaned = re.sub(r'[^\w\s]', '', cleaned)  # Remove punctuation for comparison
+        
+        # Skip very short sentences or headers
+        if len(cleaned.split()) < 3:
+            unique_sentences.append(sentence)
+            continue
+            
+        # Check for similarity with existing content
+        is_duplicate = False
+        for seen in seen_content:
+            # Calculate simple similarity (common words)
+            words1 = set(cleaned.split())
+            words2 = set(seen.split())
+            if len(words1 & words2) / max(len(words1), len(words2), 1) > 0.7:
+                is_duplicate = True
+                break
+        
+        if not is_duplicate:
+            unique_sentences.append(sentence)
+            seen_content.add(cleaned)
+    
+    return ' '.join(unique_sentences)
+
 
 async def write_report(state: AgentState):
     """
@@ -1571,11 +1608,29 @@ async def write_report(state: AgentState):
         for section in sanitized_sections:
             section["target_words"] = max(50, int(section["target_words"] * scale_factor))
 
-    # 2) Expand each section individually
+    # 2) Expand each section individually with content distribution
     section_texts = []
-    for sec in sanitized_sections:
+    total_chunks = len(relevant_chunks)
+    chunks_per_section = max(1, total_chunks // len(sanitized_sections)) if sanitized_sections else 1
+    
+    for i, sec in enumerate(sanitized_sections):
         sec_title = sec['title']
         target_words = sec['target_words']
+
+        # Distribute content chunks to avoid repetition across sections
+        start_idx = i * chunks_per_section
+        end_idx = min(start_idx + chunks_per_section + 1, total_chunks)  # +1 for overlap
+        section_chunks = relevant_chunks[start_idx:end_idx]
+        
+        # If last section, include any remaining chunks
+        if i == len(sanitized_sections) - 1:
+            section_chunks = relevant_chunks[start_idx:]
+        
+        # Format section-specific chunks
+        section_formatted_chunks = "\n---\n".join([
+            f"Source: {chunk.metadata.get('source', 'Unknown URL')}\nContent:\n{chunk.page_content}"
+            for chunk in section_chunks
+        ])
 
         expand_prompt = f"""
         You are writing the section titled: {sec_title}
@@ -1588,26 +1643,29 @@ async def write_report(state: AgentState):
         1. FIRST examine the research question to identify what specific information is being requested
         2. SCAN the provided content chunks for the exact data, values, numbers, names, or facts that answer the question
         3. EXTRACT and PRESENT the specific requested information prominently in this section
-        4. If the user asked for specific values, metrics, or data points - FIND them and state them clearly
-        5. If comparisons were requested - EXTRACT the comparison data and present it
-        6. If trends or changes were asked about - FIND the actual trend data and present it
-        7. Use direct quotes from sources when presenting key findings
-        8. Cite sources for specific data points: "According to [source_url], the value is X"
+        4. Focus on UNIQUE information from your assigned content chunks - avoid repeating information that would appear in other sections
+        5. If the user asked for specific values, metrics, or data points - FIND them and state them clearly
+        6. If comparisons were requested - EXTRACT the comparison data and present it
+        7. If trends or changes were asked about - FIND the actual trend data and present it
+        8. Use direct quotes from sources when presenting key findings
+        9. Cite sources for specific data points: "According to [source_url], the value is X"
         
         AVOID generic statements like "X is important and should be evaluated carefully" 
         INSTEAD provide specific information like "X has a value of Y, according to [source], which represents a Z% change from..."
         
+        AVOID REPETITION: This section should contain unique information not covered in other sections.
+        
         {"Be concise but specific - focus on answering the exact question asked." if report_type == "concise" else "Be detailed and comprehensive, but prioritize presenting the specific information requested in the research question. Cite sources when possible using the provided extracts."}
 
-        PROVIDED CONTENT TO EXTRACT INFORMATION FROM:
-        {formatted_chunks}
+        PROVIDED CONTENT TO EXTRACT INFORMATION FROM (Section {i+1} of {len(sanitized_sections)}):
+        {section_formatted_chunks}
         
-        REMINDER: Your goal is to answer "{research_topic}" specifically, not to provide general analysis.
+        REMINDER: Your goal is to answer "{research_topic}" specifically using the unique information from your assigned content chunks.
         
         Write the section "{sec_title}" that directly addresses the research question using specific information from the content:
         """
 
-        messages = [SystemMessage(content=report_writer_instructions.format(research_topic=research_topic, summaries=formatted_chunks, current_date=get_current_date()) + "\n\n" + enhanced_instruction), HumanMessage(content=expand_prompt)]
+        messages = [SystemMessage(content=report_writer_instructions.format(research_topic=research_topic, summaries=section_formatted_chunks, current_date=get_current_date()) + "\n\n" + enhanced_instruction), HumanMessage(content=expand_prompt)]
         sec_resp = await _call_llm(messages)
         sec_content = None
         if sec_resp is not None:
@@ -1632,54 +1690,64 @@ async def write_report(state: AgentState):
     actual_words = _word_count(final_report_content)
     logging.info("Initial generated report: target_words=%d actual_words=%d max_words=%d", expected_words, actual_words, max_words)
 
-    # For concise reports, be more lenient with word count
-    min_threshold = 0.6 if report_type == "concise" else 0.8
-    min_expected_words = max(int(expected_words * min_threshold), 600 if report_type == "concise" else 800)
+    # For concise reports, be more lenient with word count and skip expansion
+    min_threshold = 0.5 if report_type == "concise" else 0.7  # Reduced thresholds to minimize expansion
+    min_expected_words = max(int(expected_words * min_threshold), 500 if report_type == "concise" else 700)
 
     expansion_attempts = 0
-    max_expansions = 1 if report_type == "concise" else 2
+    max_expansions = 0 if report_type == "concise" else 1  # Only expand detailed reports, and only once
     
     # If actual words are significantly less than expected and under the max limit, request an expansion pass
-    while actual_words < min_expected_words and actual_words < max_words * 0.9 and expansion_attempts < max_expansions:
+    while actual_words < min_expected_words and actual_words < max_words * 0.8 and expansion_attempts < max_expansions:
         deficit = max(0, min(expected_words - actual_words, max_words - actual_words))
-        logging.warning("Report shorter than expected (have=%d want=%d max=%d). Requesting expansion #%d.", actual_words, expected_words, max_words, expansion_attempts+1)
+        logging.warning("Report shorter than expected (have=%d want=%d max=%d). Requesting focused expansion #%d.", actual_words, expected_words, max_words, expansion_attempts+1)
 
+        # Focus on adding NEW information rather than rewriting existing content
         expand_all_prompt = f"""
-        The current {report_type} report below is shorter than requested but must not exceed {max_words} words total.
+        The current {report_type} report below needs approximately {deficit} additional words but must not exceed {max_words} words total.
         
-        CRITICAL: The report must directly answer this research question: "{research_topic}"
+        CRITICAL: Add NEW specific information that answers this research question: "{research_topic}"
         
-        EXPANSION INSTRUCTIONS:
-        1. Review the research question and identify any specific information that may have been missed
-        2. Look through the provided content chunks again for additional specific data, values, or facts that answer the question
-        3. Add approximately {deficit} words while preserving structure and citations
-        4. Focus on adding MORE SPECIFIC INFORMATION rather than general analysis
-        5. If the question asked for specific values or data, ensure these are prominently featured
-        6. Add more direct quotes and specific citations from sources
+        EXPANSION INSTRUCTIONS - ADD NEW CONTENT ONLY:
+        1. Review what information is MISSING from the current report that would better answer the research question
+        2. Look through the original content chunks for ADDITIONAL unused data, values, or facts
+        3. ADD approximately {deficit} words of NEW information while preserving the existing structure
+        4. Focus on COMPLEMENTARY information that wasn't already covered
+        5. Add more specific data points, quotes, or examples from different sources
+        6. DO NOT restate or rephrase information already in the report
         
-        {"Keep additions focused and relevant - prioritize specific answers to the research question." if report_type == "concise" else "Improve depth by adding more specific data points, detailed analysis of findings, and comprehensive coverage of the specific information requested."}
-
+        APPEND NEW SECTIONS OR EXPAND EXISTING ONES - Do not rewrite the entire report.
+        
         Original content chunks for reference:
         {formatted_chunks}
 
-        Current report content to expand:
+        Current report to ADD TO (do not replace):
         {final_report_content}
         
-        EXPAND the report by adding specific information that better answers the research question "{research_topic}":
+        ADD new specific information that complements the existing content and better answers "{research_topic}":
         """
-        messages = [SystemMessage(content=report_writer_instructions.format(research_topic=research_topic, summaries=formatted_chunks, current_date=get_current_date()) + "\n\n" + enhanced_instruction), HumanMessage(content=expand_all_prompt)]
+        messages = [SystemMessage(content="You are an expert report writer. Your task is to ADD new relevant information to an existing report without duplicating content."), HumanMessage(content=expand_all_prompt)]
         expand_resp = await _call_llm(messages)
         addition = getattr(expand_resp, 'content', None) if expand_resp is not None else None
         if addition:
-            # Replace content with expansion (not append, to avoid duplication)
-            final_report_content = str(addition).strip()
-            actual_words = _word_count(final_report_content)
-            logging.info("After expansion #%d actual_words=%d", expansion_attempts+1, actual_words)
+            # APPEND new content instead of replacing (to avoid duplication)
+            addition_clean = str(addition).strip()
+            if addition_clean and not addition_clean.lower().startswith(final_report_content[:100].lower()):
+                final_report_content = final_report_content + "\n\n" + addition_clean
+                actual_words = _word_count(final_report_content)
+                logging.info("After expansion #%d actual_words=%d (added content)", expansion_attempts+1, actual_words)
+            else:
+                logging.warning("Expansion attempt returned duplicate content, skipping.")
+                break
         else:
             logging.warning("Expansion attempt returned no content.")
             break
         expansion_attempts += 1
 
+    # Apply deduplication to reduce repetitive content
+    logging.info("Applying content deduplication...")
+    final_report_content = deduplicate_content(final_report_content)
+    
     # Final word count check and truncation if necessary
     final_words = _word_count(final_report_content)
     if final_words > max_words:
