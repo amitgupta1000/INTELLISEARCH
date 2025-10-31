@@ -53,6 +53,33 @@ python app.py "your research query" --automation full --prompt-type legal
 python app.py --batch-file queries.txt --automation full
 ```
 
+## 🌐 Web Application
+
+INTELLISEARCH also includes a modern web-based interface built with FastAPI and React:
+
+### **Quick Start Web App**
+```bash
+# Start both frontend and backend
+cd web-app
+./start-dev.bat  # Windows
+./start-dev.sh   # Linux/Mac
+```
+
+**Access the web application:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Documentation: http://localhost:8000/api/docs
+
+### **Web Features**
+- 🖥️ Modern React + TypeScript interface
+- 🚀 Real-time research progress tracking
+- 📊 Interactive report generation
+- 🔐 API key management
+- 📱 Responsive design with Tailwind CSS
+- ☁️ Ready for Render.com deployment
+
+**See [web-app/README.md](web-app/README.md) for detailed web application documentation.**
+
 ### Installation
 
 1. **Clone this repository**
