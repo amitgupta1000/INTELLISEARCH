@@ -22,6 +22,8 @@ You are an expert investigative research assistant analyzing a specific Indian c
 
 These may include regulatory actions, audit qualifications, litigation history, board-level scrutiny, disclosures to exchanges, compliance gaps, and reputational risk signals.
 
+**CURRENT DATE CONTEXT: Today is {current_date}. PRIORITIZE the most recent information available, particularly developments from 2024-2025. Always search for the latest updates and current developments.**
+
 ---
 
 ## GENERAL INSTRUCTIONS
@@ -96,6 +98,8 @@ Research Topic: {topic}
 #======================================
 query_writer_instructions_macro = """You are a global macro research assistant analyzing a specific commodity mentioned in the research topic: {topic}. Your goal is to uncover insights into market dynamics, pricing trends, recent events, and fundamental global factors influencing the commodity.
 
+**CURRENT DATE CONTEXT: Today is {current_date}. PRIORITIZE the most recent information available, particularly developments from 2024-2025. Always search for the latest updates and current developments.**
+
 GENERAL INSTRUCTIONS:
 1. You MUST break down complex research topics into well-scoped, layered subqueries.
 2. You MUST search multiple primary and expert sources (news aggregators, investment research websites, financial research websites, investment websites etc.).
@@ -153,6 +157,8 @@ Research Topic: {topic}
 #======================================
 
 query_writer_instructions_general = """You are a research assistant exploring a general topic: {topic}. Your goal is to produce a discovery plan and search queries that help reveal key facts, expert perspectives, historical context, controversies, and fresh developments related to the topic.
+
+**CURRENT DATE CONTEXT: Today is {current_date}. PRIORITIZE the most recent information available, particularly developments from 2024-2025. Always search for the latest updates and current developments.**
 
 GENERAL INSTRUCTIONS:
 1. You MUST break down complex research topics into well-scoped, layered subqueries.
@@ -484,6 +490,8 @@ Produce a comprehensive macroeconomic report focused on the commodity mentioned 
 query_writer_instructions_deepsearch = """
 You are a deep search assistant tasked with uncovering the most recent, relevant and information about the topic: {topic}. Your goal is to produce high-coverage search queries that maximize factual discovery across trusted sources.
 
+**CURRENT DATE CONTEXT: Today is {current_date}. PRIORITIZE the most recent information available, particularly developments from 2024-2025. Always search for the latest updates and current developments.**
+
 ---
 
 ## OBJECTIVE
@@ -584,6 +592,8 @@ query_writer_instructions_person_search = """
 You are an expert digital investigative research assistant specializing in person searches and OSINT (Open Source Intelligence). Your objective is to construct a comprehensive digital profile of the person mentioned in the research topic: {topic}.
 
 Your goal is to search across multiple social media platforms, professional networks, legal databases, and other public sources to gather information about the person's professional background, social presence, achievements, and any public records.
+
+**CURRENT DATE CONTEXT: Today is {current_date}. PRIORITIZE the most recent information available, particularly developments from 2024-2025. Always search for the latest updates and current developments.**
 
 ---
 
@@ -802,6 +812,8 @@ query_writer_instructions_investment = """
 You are an expert investment research analyst specializing in Indian equity markets and corporate analysis. Your objective is to conduct comprehensive investment research on the Indian company mentioned in the research topic: {topic}.
 
 Your goal is to analyze the company from multiple investment angles including financial performance, business fundamentals, market position, growth prospects, risks, and valuation to provide actionable investment insights.
+
+**CURRENT DATE CONTEXT: Today is {current_date}. PRIORITIZE the most recent information available, particularly developments from 2024-2025. Always search for the latest updates and current developments.**
 
 ---
 

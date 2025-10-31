@@ -105,6 +105,15 @@ except ImportError:
     # Define dummy functions or handle missing utilities within nodes if necessary
 
 try:
+    from .question_analyzer import analyze_research_question, generate_extraction_instructions
+except ImportError:
+    logging.warning("Could not import question analyzer. Using fallback methods.")
+    def analyze_research_question(question):
+        return {"specificity_level": "medium", "requires_numeric_data": False}
+    def generate_extraction_instructions(analysis):
+        return "Extract relevant information from the content."
+
+try:
     from .config import(
             USE_PERSISTENCE,
             MAX_RESULTS,
@@ -233,6 +242,14 @@ class AgentState(TypedDict):
     search_iteration_count: Optional[int]    # Counts loops from AI_evaluate ↔ evaluate_search_results
     snippet_state: Optional[Dict[str, str]]
     report_type: Optional[str] # "concise" (600-1200 words) or "detailed" (800-3000 words)
+    
+    # Automation flags
+    non_interactive: Optional[bool] # Run without blocking user input
+    auto_approve: Optional[bool] # Automatically approve generated queries
+    approval_choice: Optional[str] # Simulated user response for approval ("yes" or "no")
+    auto_report_type: Optional[str] # Automatically select report type ("concise" or "detailed")
+    report_type_choice: Optional[str] # Simulated user choice for report type
+    new_query_override: Optional[str] # Override query if approval is rejected in non-interactive mode
 
 # Pydantic models for LLM output validation (moved from initial cells)
 class SearchQueryResponse(BaseModel):
@@ -1029,16 +1046,20 @@ async def embed_index_and_extract(state: AgentState) -> AgentState:
     current_error_state = state.get('error')
 
     # Ensure necessary components are available
-    if not embeddings or not Document or not RecursiveCharacterTextSplitter or not FAISS:
-         errors.append("Required components for embedding/indexing (embeddings, Document, RecursiveCharacterTextSplitter, or FAISS) are not available.")
+    if not embeddings or not Document or not RecursiveCharacterTextSplitter:
+         errors.append("Required components for embedding/indexing (embeddings, Document, RecursiveCharacterTextSplitter) are not available.")
          logging.error(errors[-1])
          state["relevant_chunks"] = [] # Ensure relevant_chunks is initialized
          new_error = (str(current_error_state or '') + "\n" + "\n".join(errors)).strip() if errors else (current_error_state.strip() if current_error_state is not None else None)
          state['error'] = None if new_error is None or new_error == "" else new_error
          return state
 
+    # Check if FAISS is available
+    faiss_available = FAISS is not None
+    if not faiss_available:
+        logging.warning("FAISS not available. Using fallback text-based similarity search.")
 
-    # --- Embedding and Indexing Logic (using FAISS) ---
+    # --- Embedding and Indexing Logic (with FAISS fallback) ---
     if not relevant_contexts:
         logging.warning("No relevant contexts found for embedding and indexing.")
         # Safely update error state
@@ -1047,7 +1068,8 @@ async def embed_index_and_extract(state: AgentState) -> AgentState:
         state["relevant_chunks"] = [] # Ensure relevant_chunks is initialized even on error
         return state
 
-    logging.info("Processing %d relevant contexts for embedding and indexing using FAISS.", len(relevant_contexts))
+    logging.info("Processing %d relevant contexts for embedding and indexing%s.", 
+                 len(relevant_contexts), " using FAISS" if faiss_available else " using fallback method")
 
     documents_content = []
     document_metadatas = []
@@ -1078,17 +1100,27 @@ async def embed_index_and_extract(state: AgentState) -> AgentState:
 
         logging.info("Created %d document chunks for embedding.", len(documents_content))
 
-        # Create FAISS index from documents and embeddings
-        # FAISS.from_documents expects a list of Document objects
+        # Create vector database (FAISS or fallback)
         documents = [Document(page_content=doc, metadata=meta) for doc, meta in zip(documents_content, document_metadatas)]
-        vector_db = FAISS.from_documents(documents, embeddings)
-
-        logging.info("FAISS VectorStore created and documents added.")
+        
+        if faiss_available:
+            # Use FAISS for vector similarity search
+            vector_db = FAISS.from_documents(documents, embeddings)
+            logging.info("FAISS VectorStore created and documents added.")
+        else:
+            # Use fallback: store documents for text-based similarity search
+            vector_db = {
+                'documents': documents,
+                'content': documents_content,
+                'embeddings': None,  # Could compute embeddings here if needed
+                'type': 'fallback'
+            }
+            logging.info("Fallback document store created (no FAISS available).")
 
     except Exception as e:
-        error_msg = f"An error occurred during embedding and indexing with FAISS: {e}"
+        error_msg = f"An error occurred during embedding and indexing: {e}"
         errors.append(error_msg)
-        logging.exception("Error in embed_and_index_content part (FAISS): %s", e)
+        logging.exception("Error in embed_and_index_content part: %s", e)
         # If embedding/indexing fails, there's nothing to extract from
         state["relevant_chunks"] = [] # Ensure relevant_chunks is initialized even on error
         # Safely update error state
@@ -1096,17 +1128,8 @@ async def embed_index_and_extract(state: AgentState) -> AgentState:
         state['error'] = None if new_error is None or new_error == "" else new_error
         return state
 
-    # --- Relevant Chunk Retrieval Logic (using FAISS) ---
-    # Use the vector_db (FAISS VectorStore) instance created in the embedding step
-
-    if vector_db is None:
-         # This case should ideally not be hit if embedding was successful
-         logging.warning("No FAISS VectorStore available for chunk retrieval after embedding.")
-         state["relevant_chunks"] = []
-         # Safely update error state
-         new_error = (str(current_error_state or '') + "\nNo FAISS VectorStore available after embedding.").strip()
-         state['error'] = None if new_error == "" else new_error
-         return state
+    # --- Relevant Chunk Retrieval Logic ---
+    # Use the vector_db (FAISS VectorStore) or fallback document store
 
     # Define the query for retrieval (using the original user query)
     retrieval_query = state.get("new_query")
@@ -1120,15 +1143,40 @@ async def embed_index_and_extract(state: AgentState) -> AgentState:
         return state
 
     try:
-        # Perform the similarity search using FAISS
-        retriever = vector_db.as_retriever(search_kwargs={"k": N_CHUNKS})
-        relevant_chunks = retriever.invoke(retrieval_query)
-        logging.info("Retrieved %d relevant chunks for query '%s' using FAISS.", len(relevant_chunks), retrieval_query)
+        if vector_db and hasattr(vector_db, 'as_retriever'):
+            # FAISS mode - perform vector similarity search
+            retriever = vector_db.as_retriever(search_kwargs={"k": N_CHUNKS})
+            relevant_chunks = retriever.invoke(retrieval_query)
+            logging.info("Retrieved %d relevant chunks for query '%s' using FAISS.", len(relevant_chunks), retrieval_query)
+            
+        elif vector_db and isinstance(vector_db, dict) and vector_db.get('type') == 'fallback':
+            # Fallback mode - simple text matching
+            docs = vector_db.get('docs', [])
+            query_words = retrieval_query.lower().split()
+            
+            # Score documents based on keyword overlap
+            scored_docs = []
+            for doc in docs:
+                content = doc.get('page_content', '').lower()
+                score = sum(1 for word in query_words if word in content)
+                if score > 0:
+                    scored_docs.append((score, doc))
+            
+            # Sort by score and take top N_CHUNKS
+            scored_docs.sort(key=lambda x: x[0], reverse=True)
+            relevant_chunks = [doc for score, doc in scored_docs[:N_CHUNKS]]
+            
+            logging.info("Retrieved %d relevant chunks for query '%s' using fallback text search.", 
+                        len(relevant_chunks), retrieval_query)
+        else:
+            # No vector_db available at all
+            logging.warning("No vector database or fallback store available for chunk retrieval.")
+            relevant_chunks = []
 
     except Exception as e:
-        error_msg = f"Error during FAISS similarity search for query '{retrieval_query}': {e}"
+        error_msg = f"Error during similarity search for query '{retrieval_query}': {e}"
         errors.append(error_msg)
-        logging.exception("Error during chunk retrieval (FAISS): %s", e)
+        logging.exception("Error during chunk retrieval: %s", e)
         relevant_chunks = [] # Ensure relevant_chunks is empty on error
 
     state["relevant_chunks"] = relevant_chunks # Store the retrieved chunks
@@ -1260,27 +1308,39 @@ async def AI_evaluate(state: AgentState) -> AgentState:
 
 #=============================================================================================
 reasoning_instruction = (
-    "You are tasked with generating a highly detailed and exhaustive report "
-    "based on the summarized content chunks. The response should: \n"
-    "- Be verbose and comprehensive (aim for full elaboration, not bullet points)\n"
-    "- Provide insights and connections across multiple sources\n"
-    "- Attribute specific information to individual source URLs, whenever possible\n"
-    "- Include citations in-line (e.g., 'According to [source_url], ...')\n"
-    "- Avoid generic phrasing; prefer domain-specific language\n"
-    "- Begin with a strong statement of your goal, and show how you intend to fulfill that goal\n"
-    "- Do not summarize; instead, interpret and expand\n"
-    "- Respond as if writing a professional research-grade output"
+    "You are tasked with generating a highly detailed and specific report "
+    "that directly answers the user's research question using the provided content chunks. The response should: \n"
+    "- FIRST identify the specific information requested in the research question\n"
+    "- EXTRACT exact data, values, numbers, dates, names, and specific facts from the content chunks\n"
+    "- DIRECTLY answer what was asked rather than providing general analysis\n"
+    "- If specific values, numbers, or data points were requested, FIND and PRESENT them prominently\n"
+    "- If comparisons were requested, EXTRACT the specific comparison data\n"
+    "- If trends were asked about, FIND the actual trend data and metrics\n"
+    "- Use direct quotes and specific citations for key findings\n"
+    "- Be verbose and comprehensive but FOCUSED on answering the specific question\n"
+    "- Provide insights and connections, but only AFTER presenting the specific requested information\n"
+    "- Attribute specific information to individual source URLs whenever possible\n"
+    "- Include citations in-line (e.g., 'According to [source_url], the value is X...')\n"
+    "- Begin with a clear statement of what specific information was found\n"
+    "- If the exact information requested is not available, state this clearly and provide the closest available data\n"
+    "- Respond as if writing a professional research report that directly addresses the user's specific needs"
 )
 
 researcher_instruction = (
-    "You are tasked with generating a factual and comprehensive report "
-    "based solely on the provided content chunks. The response should: \n"
-    "- Focus on factual coverage without interpretation or reasoning\n"
-    "- Present information clearly and concisely, organized by source or theme\n"
+    "You are tasked with generating a factual and targeted report "
+    "that directly addresses the user's specific research question using the provided content chunks. The response should: \n"
+    "- FIRST identify exactly what information the user is seeking\n"
+    "- LOCATE and EXTRACT the specific data, values, facts, or information requested\n"
+    "- PRESENT the requested information clearly and prominently at the beginning\n"
+    "- If numerical values were requested, FIND and DISPLAY them with proper context\n"
+    "- If specific entities, names, or items were asked about, EXTRACT and LIST them\n"
+    "- Focus on factual coverage that directly answers the question\n"
+    "- Present information clearly and concisely, organized by relevance to the question\n"
     "- Attribute each fact to its source URL\n"
-    "- Avoid speculation, synthesis, or inferred connections\n"
-    "- Use bullet points or structured formatting if helpful\n"
-    "- Respond as if compiling a reference-grade factual digest"
+    "- Avoid generic analysis when specific information was requested\n"
+    "- Use bullet points or structured formatting to highlight key requested data\n"
+    "- If the exact requested information is not found, clearly state this and provide related available information\n"
+    "- Respond as if compiling a targeted factual digest that answers the specific question asked"
 )
 #=============================================================================================
 
@@ -1344,6 +1404,13 @@ async def write_report(state: AgentState):
     relevant_chunks = state.get('relevant_chunks', [])
     research_topic = state.get('new_query', 'the topic')
 
+    # Analyze the research question to understand what specific information is needed
+    question_analysis = analyze_research_question(research_topic)
+    extraction_instructions = generate_extraction_instructions(question_analysis)
+    
+    logging.info(f"Question analysis: {question_analysis}")
+    logging.info(f"Extraction focus: {extraction_instructions}")
+
     if not relevant_chunks:
         final_report_content = f"Could not generate a report. No relevant information was found for the topic: '{research_topic}'."
         errors.append(final_report_content)
@@ -1376,6 +1443,24 @@ async def write_report(state: AgentState):
     ])
 
     selected_instruction = reasoning_instruction if reasoning_mode else researcher_instruction
+    
+    # Enhance the instruction with specific extraction guidance based on question analysis
+    enhanced_instruction = f"""
+    {selected_instruction}
+    
+    SPECIFIC EXTRACTION REQUIREMENTS FOR THIS QUESTION:
+    {extraction_instructions}
+    
+    QUESTION ANALYSIS RESULTS:
+    - Question type: {question_analysis.get('question_type', 'general')}
+    - Specificity level: {question_analysis.get('specificity_level', 'medium')}
+    - Requires numeric data: {question_analysis.get('requires_numeric_data', False)}
+    - Requires comparison: {question_analysis.get('requires_comparison', False)}
+    - Requires list: {question_analysis.get('requires_list', False)}
+    - Temporal context: {question_analysis.get('temporal_context', 'None specified')}
+    
+    REMEMBER: Your primary goal is to answer "{research_topic}" with specific information from the provided content chunks.
+    """
 
     # Helper to call the LLM with flexible wrappers
     async def _call_llm(messages: List[Any]):
@@ -1393,19 +1478,32 @@ async def write_report(state: AgentState):
 
     # 1) Request an outline (JSON) specifying section titles and target word counts
     outline_prompt = f"""
+    You are creating an outline for a report that must directly answer this specific research question: "{research_topic}"
+    
     {report_writer_instructions.format(research_topic=research_topic, summaries=formatted_chunks, current_date=get_current_date())}
 
-    {selected_instruction}
+    {enhanced_instruction}
+    
+    CRITICAL TASK: Analyze the research question to understand what specific information is being requested, then create an outline that will ensure this information is extracted and presented.
 
-    Please provide a JSON-only outline for a {report_type} report on the research topic above. The JSON should be a single object with a "sections" key whose value is a list of objects with the keys:
-      - title: string (section heading)
+    Research Question Analysis:
+    - What specific data, values, metrics, or facts is the user asking for?
+    - What type of answer does this question require (numerical data, comparison, list, analysis, etc.)?
+    - What are the key components that need to be addressed?
+
+    Please provide a JSON-only outline for a {report_type} report that will DIRECTLY ANSWER the research question above. The JSON should be a single object with a "sections" key whose value is a list of objects with the keys:
+      - title: string (section heading that relates to answering the specific question)
       - target_words: integer (approximate number of words to generate for this section)
 
-    IMPORTANT: This is a {report_type.upper()} report with a MAXIMUM of {max_words} words total.
-    Suggest between {min_sections} and {max_sections} sections. Make sure the total target word count is around {max_words} words but does not exceed it.
+    IMPORTANT: 
+    - This is a {report_type.upper()} report with a MAXIMUM of {max_words} words total
+    - Each section should be designed to extract and present specific information that answers the research question
+    - Suggest between {min_sections} and {max_sections} sections that focus on different aspects of answering the question
+    - Make sure the total target word count is around {max_words} words but does not exceed it
+    - Section titles should indicate what specific information will be presented, not generic categories
 
     Respond with JSON only (no surrounding explanation). Example:
-    {{"sections": [{{"title": "Introduction", "target_words": {default_section_words//2}}}, {{"title": "Findings", "target_words": {default_section_words}}}, ...]}}
+    {{"sections": [{{"title": "Specific Data and Values Found", "target_words": {default_section_words//2}}}, {{"title": "Detailed Analysis of [Specific Aspect]", "target_words": {default_section_words}}}, ...]}}
     """
 
     messages = [SystemMessage(content=outline_prompt), HumanMessage(content=f"Provide the outline for: {research_topic}")]
@@ -1427,19 +1525,19 @@ async def write_report(state: AgentState):
 
     # Fallback simple outline if parsing failed
     if not sections:
-        logging.warning("Could not parse outline from LLM. Falling back to simple outline based on report type.")
+        logging.warning("Could not parse outline from LLM. Falling back to question-focused outline based on report type.")
         if report_type == "concise":
             sections = [
-                {"title": "Executive Summary", "target_words": 200},
-                {"title": "Key Findings", "target_words": 700},
-                {"title": "Conclusions", "target_words": 300}
+                {"title": "Direct Answer to Research Question", "target_words": 400},
+                {"title": "Supporting Data and Evidence", "target_words": 500},
+                {"title": "Key Findings Summary", "target_words": 300}
             ]
         else:  # detailed
             sections = [
-                {"title": "Introduction", "target_words": 400},
-                {"title": "Comprehensive Analysis", "target_words": 1600},
-                {"title": "Key Findings", "target_words": 800},
-                {"title": "Implications and Conclusions", "target_words": 400}
+                {"title": "Specific Information Requested", "target_words": 600},
+                {"title": "Detailed Data and Analysis", "target_words": 1200},
+                {"title": "Supporting Evidence and Sources", "target_words": 800},
+                {"title": "Additional Context and Implications", "target_words": 400}
             ]
 
     # Clamp and sanitize sections based on report type
@@ -1480,20 +1578,36 @@ async def write_report(state: AgentState):
         target_words = sec['target_words']
 
         expand_prompt = f"""
-        You are asked to write the section titled: {sec_title}
-
+        You are writing the section titled: {sec_title}
+        
+        CRITICAL: This report must directly answer the user's specific research question: "{research_topic}"
+        
         Target length: approximately {target_words} words. This is part of a {report_type} report (maximum {max_words} words total).
-        {"Be concise but informative." if report_type == "concise" else "Be detailed, cite sources when possible using the provided extracts, and prioritize clarity and completeness."}
+        
+        SPECIFIC INSTRUCTIONS FOR THIS SECTION:
+        1. FIRST examine the research question to identify what specific information is being requested
+        2. SCAN the provided content chunks for the exact data, values, numbers, names, or facts that answer the question
+        3. EXTRACT and PRESENT the specific requested information prominently in this section
+        4. If the user asked for specific values, metrics, or data points - FIND them and state them clearly
+        5. If comparisons were requested - EXTRACT the comparison data and present it
+        6. If trends or changes were asked about - FIND the actual trend data and present it
+        7. Use direct quotes from sources when presenting key findings
+        8. Cite sources for specific data points: "According to [source_url], the value is X"
+        
+        AVOID generic statements like "X is important and should be evaluated carefully" 
+        INSTEAD provide specific information like "X has a value of Y, according to [source], which represents a Z% change from..."
+        
+        {"Be concise but specific - focus on answering the exact question asked." if report_type == "concise" else "Be detailed and comprehensive, but prioritize presenting the specific information requested in the research question. Cite sources when possible using the provided extracts."}
 
-        Use the following extracted content as the factual basis (do not invent sources):
-
+        PROVIDED CONTENT TO EXTRACT INFORMATION FROM:
         {formatted_chunks}
-
-        Produce the full body text for section "{sec_title}". Avoid adding an overall table of contents or notes — output the section text only.
-        {"Keep it focused and to the point." if report_type == "concise" else ""}
+        
+        REMINDER: Your goal is to answer "{research_topic}" specifically, not to provide general analysis.
+        
+        Write the section "{sec_title}" that directly addresses the research question using specific information from the content:
         """
 
-        messages = [SystemMessage(content=report_writer_instructions.format(research_topic=research_topic, summaries=formatted_chunks, current_date=get_current_date())), HumanMessage(content=expand_prompt)]
+        messages = [SystemMessage(content=report_writer_instructions.format(research_topic=research_topic, summaries=formatted_chunks, current_date=get_current_date()) + "\n\n" + enhanced_instruction), HumanMessage(content=expand_prompt)]
         sec_resp = await _call_llm(messages)
         sec_content = None
         if sec_resp is not None:
@@ -1531,16 +1645,30 @@ async def write_report(state: AgentState):
         logging.warning("Report shorter than expected (have=%d want=%d max=%d). Requesting expansion #%d.", actual_words, expected_words, max_words, expansion_attempts+1)
 
         expand_all_prompt = f"""
-        The current {report_type} report below is shorter than requested but must not exceed {max_words} words total. 
-        Please expand the report by approximately {deficit} words while preserving structure and citations. 
-        {"Keep additions focused and relevant." if report_type == "concise" else "Improve depth, add details, and expand each section proportionally."}
+        The current {report_type} report below is shorter than requested but must not exceed {max_words} words total.
+        
+        CRITICAL: The report must directly answer this research question: "{research_topic}"
+        
+        EXPANSION INSTRUCTIONS:
+        1. Review the research question and identify any specific information that may have been missed
+        2. Look through the provided content chunks again for additional specific data, values, or facts that answer the question
+        3. Add approximately {deficit} words while preserving structure and citations
+        4. Focus on adding MORE SPECIFIC INFORMATION rather than general analysis
+        5. If the question asked for specific values or data, ensure these are prominently featured
+        6. Add more direct quotes and specific citations from sources
+        
+        {"Keep additions focused and relevant - prioritize specific answers to the research question." if report_type == "concise" else "Improve depth by adding more specific data points, detailed analysis of findings, and comprehensive coverage of the specific information requested."}
 
-        Current report content:
+        Original content chunks for reference:
+        {formatted_chunks}
 
+        Current report content to expand:
         {final_report_content}
+        
+        EXPAND the report by adding specific information that better answers the research question "{research_topic}":
         """
-        messages = [SystemMessage(content=report_writer_instructions.format(research_topic=research_topic, summaries=formatted_chunks, current_date=get_current_date())), HumanMessage(content=expand_all_prompt)]
-        expand_resp = await _call_llm(messages, max_tokens=min(1200, deficit * 2 + 200))
+        messages = [SystemMessage(content=report_writer_instructions.format(research_topic=research_topic, summaries=formatted_chunks, current_date=get_current_date()) + "\n\n" + enhanced_instruction), HumanMessage(content=expand_all_prompt)]
+        expand_resp = await _call_llm(messages)
         addition = getattr(expand_resp, 'content', None) if expand_resp is not None else None
         if addition:
             # Replace content with expansion (not append, to avoid duplication)

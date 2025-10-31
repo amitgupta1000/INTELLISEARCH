@@ -1,51 +1,85 @@
 # requirements.txt
 # Pinned dependencies for INTELLISEARCH (stable, minimal set).
-# Adjust versions if you need compatibility with a specific environment.
-# Use a virtual environment before installing these.
+# Packages are organized by priority for installation order.
 
-# Core libraries
+# ============================================================================
+# CORE PACKAGES (install first)
+# ============================================================================
 requests>=2.31.0
-requests-html>=0.10.0
 python-dotenv>=1.0.0
 pydantic>=2.8.0
-aiohttp>=3.9.0
-beautifulsoup4>=4.12.2
-lxml>=5.0.0
 nest_asyncio>=1.5.6
-ratelimit>=2.2.1
 
-# LangChain / LLM integration
-# Use a LangChain compatible version
+# ============================================================================
+# LANGCHAIN CORE PACKAGES (critical for functionality)
+# ============================================================================
 langchain>=0.1.0
+langchain-core>=0.1.0
+langchain-community>=0.1.0
+langchain-text-splitters>=0.1.0
 
 # LangGraph workflow engine
 langgraph>=0.1.0
 
-# Embeddings / vector DB / retrieval
-chromadb>=0.4.0
-# FAISS often requires platform wheels or conda; see SETUP.md for instructions
-faiss-cpu>=1.7.4
+# ============================================================================
+# LLM PROVIDER PACKAGES (provider-specific)
+# ============================================================================
+# Google AI
+google-genai>=1.0.0
+langchain-google-genai>=1.0.0,<2.0.0
 
-# PDF and document handling
+# Anthropic
+anthropic>=0.25.0
+langchain-anthropic>=0.1.0
+
+# Together AI
+together>=1.0.0
+langchain-together>=0.1.0
+
+# Voyage AI (optional)
+# voyageai>=0.2.0
+# langchain-voyageai>=0.1.0
+
+# ============================================================================
+# WEB SCRAPING & HTTP
+# ============================================================================
+aiohttp>=3.9.0
+beautifulsoup4>=4.12.2
+requests-html>=0.10.0
+lxml>=5.0.0
+trafilatura>=1.7.2
+
+# ============================================================================
+# DOCUMENT PROCESSING
+# ============================================================================
 pymupdf>=1.23.0
 pypdf>=4.0.0
-trafilatura>=1.7.2
 fpdf2>=2.8.0
 
-# Ranking helper used in utils
-rank_bm25==0.2.2
+# ============================================================================
+# SEARCH & RANKING
+# ============================================================================
+rank_bm25>=0.2.2
 
-# Optional / provider SDKs (uncomment if you need them)
-google-genai>=1
-langchain-google-genai>=1.0.0
-anthropic>=0.25.0
-together>=1.0.0
-voyageai>=0.2.0
-
-# Developer tooling (optional)
+# ============================================================================
+# UTILITIES & PERFORMANCE
+# ============================================================================
+ratelimit>=2.2.1
 rich>=13.3.4
-pytest>=7.4.0
+
+# ============================================================================
+# VECTOR DATABASES (optional but recommended)
+# ============================================================================
+# chromadb>=0.4.0
+faiss-cpu>=1.7.4  # For vector similarity search (install with pip or conda)
+
+# ============================================================================
+# DEVELOPMENT & TESTING (optional)
+# ============================================================================
+# pytest>=7.4.0
 
 # Notes:
-# - Some packages (faiss-cpu, certain langchain integrations) may require special install steps on Windows.
-# - If a package fails to install with pip on your platform, see the instructions in SETUP.md (conda/alternate wheels).
+# - Install packages in the order listed for best compatibility
+# - Some packages (faiss-cpu, chromadb) may require conda or special handling
+# - Version ranges prevent conflicts between LangChain packages
+# - Comment out optional packages if not needed to reduce installation time

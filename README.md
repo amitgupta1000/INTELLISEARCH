@@ -19,6 +19,38 @@ An advanced AI-powered research pipeline that conducts comprehensive web searche
 - Windows OS (batch files included)
 - API Keys for your chosen LLM providers
 
+### Execution Options
+
+**📋 See [EXECUTION_GUIDE.md](EXECUTION_GUIDE.md) for detailed execution options**
+
+#### **Option 1: Complete Setup & Interactive Mode (Recommended for first time)**
+```batch
+run_setup_and_interactive.bat
+```
+- Handles complete environment setup
+- Interactive mode with full control
+- Best for first-time users
+
+#### **Option 2: Quick Automated Research (Fast execution)**
+```batch
+run_automated.bat
+```
+- Fast automated research
+- No user prompts during workflow
+- Requires environment already set up
+
+#### **Option 3: Command Line Interface (Advanced)**
+```bash
+# Interactive mode
+python app.py --interactive
+
+# Automated with custom settings
+python app.py "your research query" --automation full --prompt-type legal
+
+# Batch processing
+python app.py --batch-file queries.txt --automation full
+```
+
 ### Installation
 
 1. **Clone this repository**

@@ -2,8 +2,15 @@
 setlocal enabledelayedexpansion
 
 echo ===============================================
-echo          INTELLISEARCH Launcher
+echo      INTELLISEARCH Setup & Interactive Mode
 echo ===============================================
+echo.
+echo This script will:
+echo   - Check Python installation
+echo   - Create/activate virtual environment
+echo   - Install required packages
+echo   - Check for .env configuration
+echo   - Run INTELLISEARCH in INTERACTIVE mode
 echo.
 
 :: Check if Python is installed
@@ -45,61 +52,46 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: Check if requirements are installed by trying to import a key package
-python -c "import langchain" >nul 2>&1
+:: Check if requirements are installed by validating LangChain imports
+echo Validating LangChain/LangGraph imports...
+python -c "from src.import_validator import validate_imports; v = validate_imports(); v.print_status_report(); exit(0 if not v.get_missing_packages() else 1)" >nul 2>&1
 if %errorlevel% neq 0 (
     echo Installing required packages...
     echo This may take a few minutes...
     python -m pip install --upgrade pip setuptools wheel
     
-    :: Try installing requirements first
-    pip install -r requirements.txt
-    if %errorlevel% neq 0 (
-        echo.
-        echo WARNING: Some packages failed to install with pip
-        echo This is common with Python 3.13 due to compatibility issues
-        echo.
-        echo Trying individual package installation...
-        
-        :: Install core packages individually
-        pip install "requests>=2.31.0"
-        pip install "requests-html>=0.10.0"
-        pip install "python-dotenv>=1.0.0"
-        pip install "beautifulsoup4>=4.12.2"
-        pip install "nest_asyncio>=1.5.6"
-        pip install "aiohttp>=3.9.0"
-        pip install "rich>=13.3.4"
-        pip install "ratelimit>=2.2.1"
-        
-        :: Install pydantic
-        pip install "pydantic>=2.8.0"
-        
-        :: Install LangChain components
-        pip install "langchain>=0.1.0"
-        pip install "langgraph>=0.1.0"
-        
-        :: Install document processing
-        pip install "pymupdf>=1.23.0"
-        pip install "pypdf>=4.0.0"
-        pip install "fpdf2>=2.8.0"
-        pip install "trafilatura>=1.7.2"
-        
-        :: Install other components
-        pip install "rank_bm25>=0.2.2"
-        
-        :: Install LLM provider SDKs
-        echo Installing LLM provider SDKs...
-        pip install "google-genai>=1"
-        pip install "langchain-google-genai>=1.0.0"
-        pip install "anthropic>=0.25.0"
-        pip install "together>=1.0.0"
-        pip install "voyageai>=0.2.0"
-        
-        echo.
-        echo Package installation completed.
+    :: Install core packages first
+    echo Installing core packages...
+    pip install "requests>=2.31.0" "python-dotenv>=1.0.0" "pydantic>=2.8.0" "nest_asyncio>=1.5.6"
+    
+    :: Install LangChain packages
+    echo Installing LangChain packages...
+    pip install "langchain>=0.1.0" "langgraph>=0.1.0" "langchain-core>=0.1.0" "langchain-community>=0.1.0" "langchain-text-splitters>=0.1.0"
+    
+    :: Install provider packages
+    echo Installing LLM provider packages...
+    pip install "langchain-google-genai>=1.0.0" "google-genai>=1.0.0" "langchain-together" "langchain-anthropic" "anthropic>=0.25.0" "together>=1.0.0"
+    
+    :: Install additional packages
+    echo Installing additional packages...
+    pip install "beautifulsoup4>=4.12.2" "aiohttp>=3.9.0" "requests-html>=0.10.0" "lxml>=5.0.0" "ratelimit>=2.2.1"
+    pip install "pymupdf>=1.23.0" "pypdf>=4.0.0" "fpdf2>=2.8.0" "trafilatura>=1.7.2" "rank_bm25>=0.2.2" "rich>=13.3.4"
+    
+    :: Try installing requirements file as backup
+    if exist "requirements.txt" (
+        echo Installing from requirements.txt...
+        pip install -r requirements.txt
     )
+    
     echo.
-    echo Packages installation process completed.
+    echo Validating imports after installation...
+    python -c "from src.import_validator import validate_imports; v = validate_imports(); v.print_status_report()"
+    
+    echo.
+    echo Package installation process completed.
+    echo.
+) else (
+    echo All required packages are already installed.
     echo.
 )
 
@@ -127,8 +119,10 @@ if not exist ".env" (
 
 :: Run the application
 echo ===============================================
-echo          Starting INTELLISEARCH
+echo      Starting INTELLISEARCH (Interactive)
 echo ===============================================
+echo.
+echo NOTE: You will be prompted to configure your research during execution.
 echo.
 
 python app.py

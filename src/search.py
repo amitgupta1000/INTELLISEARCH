@@ -4,11 +4,15 @@ import time
 import random
 import json
 import re # Added re import here as it's used in cache key sanitization
+import requests  # Add requests for direct Serper API calls
 from typing import List, Dict, Any, Optional, Union, Set
 from functools import lru_cache
 from dataclasses import dataclass
 import logging
 from urllib.parse import quote_plus, urlparse
+
+# Serper API endpoint
+SERPER_ENDPOINT = "https://google.serper.dev/search"
 
 # Try to import optional dependencies with fallbacks
 try:
@@ -43,13 +47,6 @@ except ImportError:
     google_search = None
     GOOGLESEARCH_AVAILABLE = False
 
-try:
-    from langchain_community.utilities import GoogleSerperAPIWrapper
-    SERPER_AVAILABLE = True
-except ImportError:
-    logging.warning("langchain_community not available. Serper search functionality disabled.")
-    GoogleSerperAPIWrapper = None
-    SERPER_AVAILABLE = False
 
 try:
     from pydantic import BaseModel
@@ -77,18 +74,18 @@ except ImportError:
     SERPER_API_KEY = None
 
 # Only set environment variable if SERPER_API_KEY is not None
+# Import unified configuration
+from .config import (
+    SERPER_API_KEY, USER_AGENT, CACHE_ENABLED, CACHE_TTL,
+    MAX_SEARCH_RESULTS as DEFAULT_MAX_RESULTS, BLOCKED_DOMAINS
+)
+
 if SERPER_API_KEY is not None:
     os.environ["SERPER_API_KEY"] = SERPER_API_KEY
 serper_api_key = os.environ.get("SERPER_API_KEY")
 
-# Try to get USER_AGENT from environment, otherwise use a generic one
-# This global variable is used as a fallback if fake_useragent fails or if the env var is explicitly set.
-USER_AGENT = os.environ.get('USER_AGENT', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
-
-# Cache settings
-CACHE_ENABLED = True # Global flag to enable/disable caching
+# Cache settings from unified config
 CACHE_DIR = os.path.expanduser("~/.deepsearcher_amit/cache/search") # Directory for search cache
-CACHE_TTL = 86400  # Cache Time-to-Live in seconds (24 hours)
 
 # Ensure cache directory exists when module is imported
 # This runs once when the search.py module is loaded.
@@ -99,6 +96,53 @@ if CACHE_ENABLED and not os.path.exists(CACHE_DIR):
     except Exception as e:
         logger.warning(f"Could not create global cache directory {CACHE_DIR}: {e}. Disabling cache globally.")
         CACHE_ENABLED = False # Disable globally if creation fails
+
+# URL classification function for search results
+def classify_url(url: str) -> str:
+    """
+    Classify URL by domain type for search result categorization.
+    
+    Args:
+        url: The URL to classify
+        
+    Returns:
+        A classification tag (e.g., 'news', 'academic', 'government', 'general')
+    """
+    try:
+        domain = urlparse(url).netloc.lower()
+        
+        # News sites
+        if any(news_domain in domain for news_domain in [
+            'reuters.com', 'bloomberg.com', 'wsj.com', 'ft.com', 'cnbc.com',
+            'bbc.com', 'cnn.com', 'theguardian.com', 'nytimes.com', 'washingtonpost.com'
+        ]):
+            return 'news'
+        
+        # Academic and research
+        if any(academic_indicator in domain for academic_indicator in [
+            '.edu', '.ac.', 'scholar.google', 'arxiv.org', 'researchgate.net',
+            'jstor.org', 'pubmed.ncbi', 'sciencedirect.com'
+        ]):
+            return 'academic'
+        
+        # Government sites
+        if any(gov_indicator in domain for gov_indicator in [
+            '.gov', '.mil', 'europa.eu', 'un.org', 'who.int'
+        ]):
+            return 'government'
+        
+        # Financial sites
+        if any(finance_domain in domain for finance_domain in [
+            'sec.gov', 'finra.org', 'nasdaq.com', 'nyse.com', 'morningstar.com',
+            'yahoo.com/finance', 'google.com/finance'
+        ]):
+            return 'financial'
+        
+        # Default classification
+        return 'general'
+        
+    except Exception:
+        return 'general'
 
 # Moved SearchResult definition here to be used by UnifiedSearcher and Pydantic models
 
@@ -137,7 +181,7 @@ class UnifiedSearcher:
     with features like caching, retries, and basic result deduplication.
     """
 
-    def __init__(self, max_results: int = 10, cache_enabled: bool = CACHE_ENABLED, cache_ttl: int = CACHE_TTL, **kwargs):
+    def __init__(self, max_results: int = DEFAULT_MAX_RESULTS, cache_enabled: bool = CACHE_ENABLED, cache_ttl: int = CACHE_TTL, **kwargs):
         """
         Initialize the unified searcher instance.
 
@@ -187,14 +231,11 @@ class UnifiedSearcher:
         # Lock to ensure thread-safe access when creating/retrieving semaphores from the _semaphores dictionary.
         self._semaphore_lock = asyncio.Lock()
 
-        # Check for SERPER_API_KEY and initialize the Serper client if the key is available.
-        if not serper_api_key:
+        # Check for SERPER_API_KEY availability (now using direct API calls)
+        if not SERPER_API_KEY:
             logger.warning("SERPER_API_KEY environment variable is not set. Serper search engine will not work.")
-            self.serper_client = None # Serper client is None if the API key is missing.
         else:
-             # Initialize the Serper client with the API key and max_results.
-             self.serper_client = GoogleSerperAPIWrapper(k=self.max_results)
-             logger.info("Serper API key found. Serper search engine is enabled.")
+            logger.info("Serper API key found. Serper search engine is enabled (using direct API).")
 
     async def _check_cache(self, query: str, engine: str) -> Optional[List[SearchResult]]:
         """
@@ -455,6 +496,19 @@ class UnifiedSearcher:
             Returns an empty list if no valid engines are specified or if all searches fail.
         """
         logger.info(f"Starting unified search for query: '{query}' with engines: {engines}, force_refresh: {force_refresh}")
+        
+        # Enhance query with current date context for better recency
+        from datetime import datetime
+        current_year = datetime.now().year
+        
+        # Add current date context to prioritize recent information (unless it's already specific)
+        if str(current_year) not in query and str(current_year-1) not in query and "recent" not in query.lower():
+            enhanced_query = f"{query} recent latest {current_year}"
+            logger.debug(f"Enhanced query with recency context: '{enhanced_query}'")
+        else:
+            enhanced_query = query
+            logger.debug(f"Query already contains date/recency context: '{query}'")
+        
         # Use default engine if none are provided.
         if engines is None:
             engines = [self.default_engine]
@@ -477,9 +531,9 @@ class UnifiedSearcher:
 
             # Check cache first unless force_refresh is True.
             if not force_refresh:
-                cached_results = await self._check_cache(query, engine)
+                cached_results = await self._check_cache(enhanced_query, engine)
                 if cached_results:
-                    logger.info(f"Using cached results for '{query}' on {engine}")
+                    logger.info(f"Using cached results for '{enhanced_query}' on {engine}")
                     # If cached results are found, create a completed task that immediately returns them.
                     # This allows cached results to be included in the asyncio.gather call alongside live searches.
                     # asyncio.sleep(0, result=...) is a simple way to create an already-completed awaitable.
@@ -490,20 +544,20 @@ class UnifiedSearcher:
             logger.debug(f"Adding live search task for engine: {engine}")
             # Map engine name to the corresponding internal search method.
             if engine == "google":
-                tasks.append(asyncio.create_task(self._search_with_retry(self._search_google, query)))
+                tasks.append(asyncio.create_task(self._search_with_retry(self._search_google, enhanced_query)))
             elif engine == "serper":
-                 # Check if Serper client was successfully initialized (requires API key) before creating the task.
-                 if self.serper_client is None:
-                      logger.warning(f"Serper client not initialized (API key missing?). Skipping Serper search.")
+                 # Check if Serper API key is available before creating the task.
+                 if not SERPER_API_KEY:
+                      logger.warning(f"Serper API key missing. Skipping Serper search.")
                  else:
-                    tasks.append(asyncio.create_task(self._search_with_retry(self._search_serper, query)))
+                    tasks.append(asyncio.create_task(self._search_with_retry(self._search_serper, enhanced_query)))
 
         # If no valid tasks were created (e.g., all engines unsupported or Serper key missing), return an empty list.
         if not tasks:
-            logger.warning(f"No valid search engine tasks created for query: '{query}'.")
+            logger.warning(f"No valid search engine tasks created for query: '{enhanced_query}'.")
             return []
 
-        logger.info(f"Running {len(tasks)} search tasks concurrently for query: '{query}'")
+        logger.info(f"Running {len(tasks)} search tasks concurrently for query: '{enhanced_query}'")
         results_from_gather = await asyncio.gather(*tasks, return_exceptions=True)
         logger.debug(f"Finished asyncio.gather for query: '{query}'. Received {len(results_from_gather)} results/exceptions.")
 
@@ -632,6 +686,11 @@ class UnifiedSearcher:
         """
         logger.info(f"Starting Google search for query: '{query}'")
         try:
+            # Check if google_search is available
+            if google_search is None:
+                logger.warning("googlesearch library not available. Google search functionality disabled.")
+                return []
+                
             # Use the googlesearch-python library which is blocking. Run it in a thread pool.
             loop = asyncio.get_event_loop()
             # Request more results than max_results from the initial googlesearch call
@@ -792,68 +851,102 @@ class UnifiedSearcher:
 
     async def _search_serper(self, query: str) -> List[SearchResult]:
         """
-        Search Serper for a query using the Langchain GoogleSerperAPIWrapper.
-
-        Requires the SERPER_API_KEY environment variable to be set.
+        Search Serper using direct API calls instead of LangChain wrapper.
+        
+        This approach provides better control over the API requests and error handling.
 
         Args:
             query: The search query string.
 
         Returns:
             A list of SearchResult objects obtained from Serper.
-            Returns an empty list if the SERPER_API_KEY is not set or the API call fails.
+            Returns an empty list if the API key is not set or the API call fails.
         """
         logger.info(f"Starting Serper search for query: '{query}'")
-        # Check if the Serper client was successfully initialized (requires API key).
-        if self.serper_client is None:
+        
+        # Check if API key is available
+        if not SERPER_API_KEY:
             logger.warning(f"Serper API key is not set. Skipping Serper search for query: '{query}'.")
-            return [] # Return empty list if the client is not available.
+            return []
 
         try:
-            # The Langchain GoogleSerperAPIWrapper's `results` method is synchronous.
-            # Run it in a thread pool to avoid blocking the event loop.
-            loop = asyncio.get_event_loop()
-            logger.debug(f"Calling Serper API client for query: '{query}'")
-            # The 'k' parameter (max_results) is set during the client initialization in __init__.
-            raw_results = await loop.run_in_executor(None, self.serper_client.results, query)
-            logger.debug(f"Received raw results from Serper API for query: '{query}'")
-
-            # Validate that the Serper API returned a dictionary.
-            if not isinstance(raw_results, dict):
-                logger.error(f"Serper API returned unexpected data type for query '{query}': {type(raw_results)}")
-                return [] # Return empty list if the format is unexpected.
-
-            results = [] # List to store Serper SearchResult objects.
-            # Iterate through the "organic" results key, which contains the main search results.
-            for r in raw_results.get("organic", []):
-                # Ensure required fields (link and snippet) are present and not empty.
-                if r.get("link") and r.get("snippet"):
-                     url = r["link"] # Get the URL.
-                     # Basic URL validation.
-                     if url and urlparse(url).scheme in ['http', 'https']:
-                        # Create SearchResult object. Title might be missing, but link/snippet are key.
-                        results.append(SearchResult(
-                            url=url,
-                            title=r.get("title", ""), # Use .get() with default for title.
-                            snippet=r["snippet"], # Snippet is required based on the check above.
-                            source="Serper" # Explicitly set the source.
-                        ))
-                     else:
-                        # Log if an invalid URL is received from Serper.
-                        logger.warning(f"Skipping invalid URL from Serper search: {url}")
-                else:
-                    # Log if a result is skipped due to missing link or snippet.
-                    logger.debug(f"Skipping Serper result due to missing link or snippet: {r}")
-
-            # Serper's 'k' parameter should handle max_results limiting, but apply slicing as a safeguard.
-            final_results = results[:self.max_results]
-
-            logger.info(f"Finished Serper search for query: '{query}'. Found {len(final_results)} results.")
-            return final_results # Return the list of SearchResult objects.
+            # Prepare headers and payload for direct API call
+            headers = {
+                "X-API-KEY": SERPER_API_KEY,
+                "Content-Type": "application/json"
+            }
+            
+            # Use max_results for this query, with a reasonable limit
+            max_results_per_query = min(self.max_results, 10)
+            
+            payload = {
+                "q": query,
+                "num": max_results_per_query,
+                "sort": "date"  # Sort by date when possible
+            }
+            
+            logger.debug(f"Calling Serper API with payload: {payload}")
+            
+            # Make the API request
+            response = requests.post(SERPER_ENDPOINT, json=payload, headers=headers, timeout=30)
+            response.raise_for_status()
+            
+            # Parse the response
+            data = response.json()
+            organic_results = data.get("organic", [])
+            
+            logger.debug(f"Received {len(organic_results)} organic results from Serper API")
+            
+            results = []
+            for result in organic_results:
+                url = result.get("link")
+                if not url:
+                    continue
+                    
+                # Check if the URL's domain is in the blocked list
+                domain = urlparse(url).netloc.lower()
+                if any(blocked_domain in domain for blocked_domain in BLOCKED_DOMAINS):
+                    logger.info(f"Excluded URL: {url} based on domain filter.")
+                    continue
+                
+                # Basic URL validation
+                if not (url and urlparse(url).scheme in ['http', 'https']):
+                    logger.warning(f"Skipping invalid URL from Serper search: {url}")
+                    continue
+                
+                # Create SearchResult with classification
+                search_result = SearchResult(
+                    url=url,
+                    title=result.get("title", ""),
+                    snippet=result.get("snippet", ""),
+                    source="Serper"
+                )
+                
+                # Add classification tag (if needed for future use)
+                classification = classify_url(url)
+                # Note: SearchResult dataclass doesn't have a tag field, 
+                # but we could extend it or use metadata if needed
+                
+                results.append(search_result)
+                
+                # Stop if we've reached our limit
+                if len(results) >= self.max_results:
+                    break
+            
+            logger.info(f"Finished Serper search for query: '{query}'. Found {len(results)} results after filtering.")
+            return results
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Network error during Serper search for query '{query}': {e}")
+            raise
+        except requests.exceptions.Timeout:
+            logger.error(f"Timeout during Serper search for query '{query}'")
+            raise
+        except ValueError as e:
+            logger.error(f"JSON parsing error during Serper search for query '{query}': {e}")
+            raise
         except Exception as e:
-            # Catch and log any errors during the Serper API call.
-            logger.error(f"Error during Serper search for query '{query}': {e}", exc_info=True)
-            # Re-raise the exception for the retry mechanism.
+            logger.error(f"Unexpected error during Serper search for query '{query}': {e}", exc_info=True)
             raise
 
 
