@@ -5,7 +5,23 @@ import logging, os, random, asyncio
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 import nest_asyncio
-nest_asyncio.apply()
+
+# Only apply nest_asyncio if we're not running under uvloop
+try:
+    loop = asyncio.get_event_loop()
+    if not isinstance(loop, type(asyncio.new_event_loop())):
+        # We're likely running under uvloop or another custom loop
+        logging.info("Skipping nest_asyncio.apply() - custom event loop detected")
+    else:
+        nest_asyncio.apply()
+        logging.info("Applied nest_asyncio patch")
+except Exception as e:
+    try:
+        # If no event loop exists yet, it's safe to apply
+        nest_asyncio.apply()
+        logging.info("Applied nest_asyncio patch (no existing loop)")
+    except Exception as e2:
+        logging.warning(f"Could not apply nest_asyncio: {e2}")
 
 # Try importing LangChain components with error handling
 try:

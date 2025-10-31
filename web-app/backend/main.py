@@ -404,4 +404,5 @@ if __name__ == "__main__":
     # Disable reload in production
     reload = os.getenv("ENVIRONMENT") != "production"
     
-    uvicorn.run(app, host="0.0.0.0", port=port, reload=reload)
+    # Use asyncio loop to avoid conflicts with nest_asyncio
+    uvicorn.run(app, host="0.0.0.0", port=port, reload=reload, loop="asyncio")

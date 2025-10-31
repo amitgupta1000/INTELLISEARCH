@@ -45,20 +45,65 @@ export const ResearchProvider: React.FC<{ children: ReactNode }> = ({ children }
     
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/research`, {
+      
+      // Step 1: Start the research
+      const startResponse = await fetch(`${apiUrl}/api/research/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify({
+          query: request.query,
+          report_type: request.reportType,
+          prompt_type: 'general',
+          automation_level: 'full'
+        }),
       });
 
-      if (!response.ok) {
-        throw new Error('Research request failed');
+      if (!startResponse.ok) {
+        throw new Error('Failed to start research');
       }
 
-      const result: ResearchResult = await response.json();
+      const startResult = await startResponse.json();
+      const sessionId = startResult.data.session_id;
+
+      // Step 2: Poll for completion
+      const pollForResult = async (): Promise<ResearchResult> => {
+        while (true) {
+          const statusResponse = await fetch(`${apiUrl}/api/research/${sessionId}/status`);
+          if (!statusResponse.ok) {
+            throw new Error('Failed to check research status');
+          }
+
+          const status = await statusResponse.json();
+          
+          if (status.status === 'completed') {
+            // Get the final result
+            const resultResponse = await fetch(`${apiUrl}/api/research/${sessionId}/result`);
+            if (!resultResponse.ok) {
+              throw new Error('Failed to get research result');
+            }
+            
+            const result = await resultResponse.json();
+            return {
+              report: result.report_content,
+              sources: result.sources || [],
+              wordCount: result.report_content ? result.report_content.split(' ').length : 0,
+              citations: result.citations || [],
+              timestamp: result.completed_at || new Date().toISOString()
+            };
+          } else if (status.status === 'failed') {
+            throw new Error('Research failed');
+          }
+          
+          // Wait 2 seconds before polling again
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      };
+
+      const result = await pollForResult();
       dispatch({ type: 'RESEARCH_SUCCESS', payload: result });
+      
     } catch (error) {
       dispatch({ 
         type: 'RESEARCH_ERROR', 
