@@ -72,16 +72,17 @@ Thumbs.db
 
 # Project specific
 *.log
-*.pdf
 reports/
 temp/
 cache/
 
-# Generated reports (keep requirements.txt but ignore generated reports)
+# Generated reports (but allow documentation PDFs)
 *_DeepSearch.txt
 *_DeepSearch.pdf
 Crystal_DeepSearch.txt
 Crystal_DeepSearch.pdf
+# Allow documentation PDFs in docs/
+!docs/*.pdf
 
 # API Keys and sensitive data
 .env

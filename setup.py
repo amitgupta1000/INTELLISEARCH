@@ -59,15 +59,10 @@ def install_packages():
         "langchain-text-splitters>=0.1.0",
     ]
     
-    # Provider-specific packages (optional)
+    # Provider-specific packages (Google GenAI only)
     provider_packages = [
         "langchain-google-genai>=1.0.0",
         "google-genai>=1.0.0",
-        "langchain-together",
-        "langchain-voyageai", 
-        "langchain-anthropic",
-        "anthropic>=0.25.0",
-        "together>=1.0.0",
     ]
     
     # Additional packages
@@ -82,6 +77,7 @@ def install_packages():
         "fpdf2>=2.8.0",
         "trafilatura>=1.7.2",
         "rank_bm25>=0.2.2",
+        "faiss-cpu>=1.7.4",
         "rich>=13.3.4",
     ]
 
@@ -134,8 +130,7 @@ except ImportError:
 # Import API keys from unified configuration
 try:
     from src.config import (
-        GOOGLE_API_KEY, VOYAGE_API_KEY, SERPER_API_KEY, 
-        ANTHROPIC_API_KEY, TOGETHER_API_KEY,
+        GOOGLE_API_KEY, SERPER_API_KEY, 
         CACHE_ENABLED, CACHE_TTL, USER_AGENT,
         RED, GREEN, BLUE, YELLOW, ENDC
     )
@@ -144,10 +139,7 @@ except ImportError:
     logging.error("Could not import from unified config. Using fallback values.")
     # Fallback values
     GOOGLE_API_KEY = None
-    VOYAGE_API_KEY = None
     SERPER_API_KEY = None
-    ANTHROPIC_API_KEY = None
-    TOGETHER_API_KEY = None
     CACHE_ENABLED = False
     CACHE_TTL = 3600
     USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'

@@ -90,7 +90,6 @@ if not exist ".env" (
     echo You may need to create a .env file with your API keys
     echo Example:
     echo SERPER_API_KEY=your_serper_key
-    echo TOGETHER_API_KEY=your_together_key
     echo GOOGLE_API_KEY=your_google_key
     echo.
     echo Do you want to continue anyway? (y/n)

@@ -16,36 +16,11 @@ except ImportError as e:
     LANGCHAIN_GOOGLE_AVAILABLE = False
 
 try:
-    from langchain_voyageai import VoyageAIEmbeddings
-    VOYAGE_AVAILABLE = True
-except ImportError as e:
-    logging.warning(f"Could not import langchain_voyageai: {e}")
-    VOYAGE_AVAILABLE = False
-
-try:
-    from langchain_together import ChatTogether
-    TOGETHER_LANGCHAIN_AVAILABLE = True
-except ImportError as e:
-    logging.warning(f"Could not import langchain_together: {e}")
-    TOGETHER_LANGCHAIN_AVAILABLE = False
-
-try:
-    from together import Together, AsyncTogether
-    TOGETHER_AVAILABLE = True
-except ImportError as e:
-    logging.warning(f"Could not import together: {e}")
-    TOGETHER_AVAILABLE = False
-
-try:
     from ratelimit import limits, sleep_and_retry
     RATELIMIT_AVAILABLE = True
-except ImportError:
-    try:
-        from ratelimiter import RateLimiter
-        RATELIMIT_AVAILABLE = True
-    except ImportError as e:
-        logging.warning(f"Could not import rate limiting: {e}")
-        RATELIMIT_AVAILABLE = False
+except ImportError as e:
+    logging.error(f"Could not import ratelimit: {e}")
+    RATELIMIT_AVAILABLE = False
 
 try:
     from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, AIMessage
@@ -65,18 +40,15 @@ except ImportError as e:
 
 # Import API keys from api_keys.py
 try:
-    from .api_keys import GOOGLE_API_KEY, VOYAGE_API_KEY, TOGETHER_API_KEY, GEMINI_API_KEY
+    from .api_keys import GOOGLE_API_KEY
 except ImportError:
     logging.error("Could not import API keys from api_keys.py. LLMs and embeddings may not initialize.")
     GOOGLE_API_KEY = None
-    VOYAGE_API_KEY = None
-    TOGETHER_API_KEY = None
-    GEMINI_API_KEY = None
 
 # Import configuration
 try: 
     from .config import (
-        DEFAULT_GEMINI_MODEL,
+        GOOGLE_MODEL,
         MAX_RETRIES,
         BASE_DELAY,
         MAX_CONCURRENT_CALLS,
@@ -99,15 +71,12 @@ try:
     if GOOGLE_API_KEY and LANGCHAIN_GOOGLE_AVAILABLE:
         embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004", google_api_key=GOOGLE_API_KEY)
         logging.info("Initialized GoogleGenerativeAIEmbeddings with models/text-embedding-004.")
-    elif VOYAGE_API_KEY and VOYAGE_AVAILABLE:
-        embeddings = VoyageAIEmbeddings(api_key=VOYAGE_API_KEY, model="voyage-3")
-        logging.info("Initialized VoyageAIEmbeddings with voyage-3")
     else:
          embeddings = None
-         if not LANGCHAIN_GOOGLE_AVAILABLE and not VOYAGE_AVAILABLE:
-             logging.error("No embedding packages available (langchain_google_genai or langchain_voyageai).")
+         if not LANGCHAIN_GOOGLE_AVAILABLE:
+             logging.error("Google GenAI package not available.")
          else:
-             logging.error("No API key available for initializing embeddings (Google or VoyageAI).")
+             logging.error("No Google API key available for initializing embeddings.")
 
 except Exception as e:
     embeddings = None
@@ -118,70 +87,14 @@ except Exception as e:
 # Consolidate LLM initialization into a single 'llm' variable
 llm = None # The primary LLM for most tasks
 
-# --- Configuration ---
-# Together API calling
-together1 = "openai/gpt-oss-20b"
-TOGETHER_API_KEY = TOGETHER_API_KEY
-TOGETHER_MODEL = together1
-
 # --- Role-Based Message Serialization ---
-def serialize_messages(messages: List[Any]) -> List[Dict[str, Any]]:
-    """Convert LangChain-style messages to Together API-compatible dicts."""
-    from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage
-
-    serialized = []
-    for msg in messages:
-        if isinstance(msg, SystemMessage):
-            serialized.append({"role": "system", "content": msg.content})
-        elif isinstance(msg, HumanMessage):
-            serialized.append({"role": "user", "content": msg.content})
-        elif isinstance(msg, AIMessage):
-            serialized.append({"role": "assistant", "content": msg.content})
-        elif isinstance(msg, ToolMessage):
-            serialized.append({
-                "role": "tool",
-                "content": msg.content,
-                "tool_call_id": msg.tool_call_id,
-            })
-        else:
-            logging.warning(f"Unknown message type: {type(msg)} — skipping.")
-    return serialized
-
-# --- Async Together Invocation ---
-async def llm_call_async_old(messages: List[Any], model: Optional[str] = None) -> str:
-    """Call Together API asynchronously and return assistant's reply."""
-    if TOGETHER_API_KEY is None:
-        logging.error("TOGETHER_API_KEY is not set.")
-        return ""
-
-    try:
-        client = AsyncTogether(api_key=TOGETHER_API_KEY)
-        payload = serialize_messages(messages)
-
-        response = await client.chat.completions.create(
-            model=model or TOGETHER_MODEL,
-            messages=payload,
-            max_tokens=20000,
-            temperature=0.2,
-        )
-
-        return response.choices[0].message.content
-    except Exception as e:
-        logging.error(f"Together API call failed: {e}")
-        return ""
-
-
-#=========================
-# LLM calling with langchain chat client
+# --- LLM calling with langchain chat client ---
 try:
-    if  GOOGLE_API_KEY:
+    if GOOGLE_API_KEY:
         llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite", temperature=0, google_api_key=GOOGLE_API_KEY)
-        logging.info("Initialized ChatGoogleGenerativeAI (llm) with gemini-1.5-flash")
-    elif TOGETHER_API_KEY:
-        llm = ChatTogether(model=TOGETHER_MODEL, temperature=0.2, max_tokens=20000, timeout=None, max_retries=4, together_api_key=TOGETHER_API_KEY)
-        logging.info(f"Initialized ChatTogether (llm) with {TOGETHER_MODEL}")
+        logging.info("Initialized ChatGoogleGenerativeAI (llm) with gemini-2.0-flash-lite")
     else:
-         logging.error("No API key available for initializing llm (Together, Anthropic, or Google).")
+         logging.error("No Google API key available for initializing llm.")
 
 except Exception as e:
     llm = None
@@ -204,7 +117,7 @@ from langchain_core.messages import (
 # Configure the generative AI library with the API key
 gemini_api_key = GOOGLE_API_KEY
 if not gemini_api_key:
-    gemini_api_key = GEMINI_API_KEY  # Fallback to GEMINI_API_KEY if GOOGLE_API_KEY not set
+    gemini_api_key = GOOGLE_API_KEY  # Fallback to GEMINI_API_KEY if GOOGLE_API_KEY not set
 
 if not gemini_api_key:
     logging.error("Neither GOOGLE_API_KEY nor GEMINI_API_KEY found in environment.")
@@ -216,7 +129,7 @@ else:
 ## GEMINI Model Calling
 gemini1 = "gemini-2.0-flash-lite"
 gemini2 = "gemini-2.0-flash"
-gemini_model =  gemini1
+gemini_model =  GOOGLE_MODEL
 
 from google import genai
 from google.genai import types

@@ -43,11 +43,8 @@ class LangChainImportValidator:
             # LangChain Text Splitters
             ("langchain_text_splitters", ["RecursiveCharacterTextSplitter"]),
             
-            # Provider-specific packages (optional)
+            # Provider-specific packages (Google GenAI only)
             ("langchain_google_genai", ["ChatGoogleGenerativeAI", "GoogleGenerativeAIEmbeddings"]),
-            ("langchain_together", ["ChatTogether"]),
-            ("langchain_voyageai", ["VoyageAIEmbeddings"]),
-            ("langchain_anthropic", ["ChatAnthropic"]),
         ]
         
         for module_name, imports in imports_to_check:
@@ -112,9 +109,6 @@ class LangChainImportValidator:
             "langchain_community.vectorstores": "langchain-community",
             "langchain_text_splitters": "langchain-text-splitters",
             "langchain_google_genai": "langchain-google-genai",
-            "langchain_together": "langchain-together",
-            "langchain_voyageai": "langchain-voyageai",
-            "langchain_anthropic": "langchain-anthropic",
         }
         return mapping.get(module_name)
     

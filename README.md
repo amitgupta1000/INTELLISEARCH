@@ -1,31 +1,33 @@
 # INTELLISEARCH 🔍
 
-An advanced AI-powered research pipeline that conducts comprehensive web searches, analyzes content, and generates detailed reports using LangGraph workflows and multiple LLM providers.
+An advanced AI-powered research pipeline that conducts comprehensive web searches, analyzes content, and generates detailed reports using LangGraph workflows and Google Gemini AI.
 
 ## 🌟 Features
 
-- **Multi-LLM Support**: Google Gemini, Anthropic Claude, Together AI
+- **Google Gemini AI**: Simplified single-provider architecture using Google's latest AI models
 - **Advanced Web Scraping**: Multiple strategies including requests-html, aiohttp, and fallback methods
 - **Intelligent Content Analysis**: AI-powered relevance evaluation and ranking
-- **Vector Search**: ChromaDB and FAISS integration for semantic search
+- **Vector Search**: Google GenerativeAI embeddings for semantic search
 - **Flexible Reports**: Configurable word limits (600-1200 for concise, 800-3000 for detailed)
-- **PDF Generation**: Automatic PDF report creation
+- **PDF Generation**: Automatic PDF report creation with fpdf2
 - **Windows Automation**: One-click batch file setup and execution
+- **Clean Architecture**: Streamlined codebase with unified Google AI integration
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Python 3.8+ (tested with Python 3.13.7)
 - Windows OS (batch files included)
-- API Keys for your chosen LLM providers
+- Google API Key for Gemini AI
+- Serper API Key for web search
 
 ### Execution Options
 
-**📋 See [EXECUTION_GUIDE.md](EXECUTION_GUIDE.md) for detailed execution options**
+**📋 See [docs/EXECUTION_GUIDE.md](docs/EXECUTION_GUIDE.md) for detailed execution options**
 
 #### **Option 1: Complete Setup & Interactive Mode (Recommended for first time)**
 ```batch
-run_setup_and_interactive.bat
+run_interactive.bat
 ```
 - Handles complete environment setup
 - Interactive mode with full control
@@ -88,9 +90,6 @@ python app.py --batch-file queries.txt --automation full
    ```env
    GOOGLE_API_KEY=your_google_api_key_here
    SERPER_API_KEY=your_serper_api_key_here
-   TOGETHER_API_KEY=your_together_api_key_here
-   ANTHROPIC_API_KEY=your_anthropic_api_key_here
-   VOYAGE_API_KEY=your_voyage_api_key_here
    ```
 
 4. **Run the application**
@@ -103,37 +102,39 @@ python app.py --batch-file queries.txt --automation full
 ```
 INTELLISEARCH/
 ├── app.py                          # Main application entry point
-├── requirements.txt                # Python dependencies
+├── requirements.txt                # Python dependencies (Google AI only)
 ├── .env                           # API keys (create this)
 ├── .gitignore                     # Git ignore rules
-├── run_intellisearch_clean.bat    # Windows launcher (recommended)
-├── run_intellisearch.bat          # Alternative Windows launcher
-├── setup_intellisearch.bat        # Setup-only batch file
-├── quick_start.bat                # Quick start launcher
+├── run_automated.bat              # Automated execution
+├── run_interactive.bat            # Interactive mode launcher
+├── setup.py                       # Setup utilities
+├── startup_validation.py          # Environment validation
 ├── src/                           # Source code
-│   ├── api_keys.py               # API key management
+│   ├── api_keys.py               # API key management (Google only)
+│   ├── automation_config.py      # Automation configuration
+│   ├── conditions.py             # Workflow conditions
 │   ├── config.py                 # Configuration settings
 │   ├── data_types.py             # Data structures and models
 │   ├── graph.py                  # LangGraph workflow definition
+│   ├── import_validator.py       # Import validation utilities
 │   ├── llm_calling.py            # LLM interaction utilities
-│   ├── llm_utils.py              # LLM utilities and providers
+│   ├── llm_utils.py              # LLM utilities (Google GenAI)
 │   ├── nodes.py                  # Workflow node implementations
 │   ├── prompt.py                 # Prompt templates
+│   ├── question_analyzer.py      # Query analysis utilities
 │   ├── scraper.py                # Web scraping utilities
 │   ├── search.py                 # Search engine integration
-│   ├── utils.py                  # General utilities
-│   └── conditions.py             # Workflow conditions
+│   └── utils.py                  # General utilities (PDF, ranking, etc.)
 ├── tests/                         # Test files
 │   └── test_workflow.py          # Workflow tests
-├── scripts/                       # Utility scripts
-│   └── env_check.py              # Environment checker
-└── docs/                          # Documentation
-    ├── SETUP.md                  # Detailed setup instructions
-    ├── BATCH_FILES_README.md     # Batch file documentation
-    ├── PACKAGE_STATUS.md         # Package compatibility info
-    ├── WORD_LIMITS_UPDATE.md     # Word limits configuration
-    ├── PACKAGE_UPDATES_SUMMARY.md # Recent package updates
-    └── SESSION_CLEANUP_FIXES.md  # Bug fixes documentation
+└── docs/                          # Documentation and support files
+    ├── CURRENT_DATE_CONTEXT_IMPLEMENTATION.md  # Date context documentation
+    ├── EXECUTION_GUIDE.md         # Detailed execution guide
+    ├── requirements_original.txt  # Original requirements backup
+    ├── IntelliSearchReport.txt    # Sample report output
+    ├── IntelliSearchReport.pdf    # Sample PDF report
+    ├── intellisearch_data_flow.png # Data flow diagram
+    └── intellisearch_workflow_graph.png # Workflow visualization
 ```
 
 ## 🛠️ Configuration
@@ -142,13 +143,14 @@ INTELLISEARCH/
 - **Concise Report**: 600-1200 words, focused summary
 - **Detailed Report**: 800-3000 words, comprehensive analysis
 
-### Supported LLM Providers
-- **Google Gemini**: Primary recommendation (gemini-2.0-flash)
-- **Together AI**: High-performance alternative
-- **Anthropic Claude**: Advanced reasoning capabilities
+### AI Provider
+- **Google Gemini**: Unified AI provider for both LLM and embeddings
+  - LLM Model: `gemini-2.0-flash-lite`
+  - Embeddings: `models/text-embedding-004`
 
 ### Search Configuration
 - **Serper API**: Primary search provider
+- **Google Custom Search**: Optional alternative
 - **Fallback methods**: Built-in alternatives when APIs unavailable
 
 ## 🔧 Advanced Usage
@@ -162,20 +164,13 @@ The system supports multiple prompt types:
 - `person_search`: People and biography research
 
 ### API Configuration
-Set your preferred providers in `.env`:
+Set your Google AI keys in `.env`:
 ```env
-# Primary LLM (choose one)
-GOOGLE_API_KEY=your_key_here
-# OR
-TOGETHER_API_KEY=your_key_here
-# OR
-ANTHROPIC_API_KEY=your_key_here
+# Google AI (required)
+GOOGLE_API_KEY=your_google_key_here
 
-# Search provider
-SERPER_API_KEY=your_key_here
-
-# Optional: Embeddings
-VOYAGE_API_KEY=your_key_here
+# Search provider (required)  
+SERPER_API_KEY=your_serper_key_here
 ```
 
 ## 🐛 Troubleshooting
@@ -183,12 +178,12 @@ VOYAGE_API_KEY=your_key_here
 ### Common Issues
 
 1. **Package Installation Failures**
-   - Use `run_intellisearch_clean.bat` for automated resolution
+   - Use `run_interactive.bat` for automated resolution
    - Python 3.13 compatibility ensured
 
 2. **API Key Issues**
-   - Verify `.env` file exists and contains valid keys
-   - Check key formats match provider requirements
+   - Verify `.env` file exists and contains valid Google and Serper keys
+   - Check key formats match Google API requirements
 
 3. **Web Scraping Failures**
    - Application includes multiple fallback methods
@@ -222,9 +217,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🙏 Acknowledgments
 
 - **LangChain/LangGraph**: Workflow orchestration
-- **Google Gemini**: Primary LLM provider
-- **Together AI**: High-performance inference
-- **Anthropic**: Advanced AI capabilities
+- **Google Gemini**: AI provider for LLM and embeddings
+- **Serper API**: Web search capabilities
+- **Python Community**: Open source packages and tools
 
 ## 📞 Support
 
@@ -235,4 +230,4 @@ For issues and questions:
 
 ---
 
-**Made with ❤️ and AI** - Combining the power of multiple LLMs for comprehensive research automation.
+**Made with ❤️ and AI** - Combining the power of Google Gemini AI for comprehensive research automation.

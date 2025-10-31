@@ -193,7 +193,6 @@ class Scraper:
 
         # Strategy list
         strategies = [
-            self._scrape_with_requests_html,
             self._scrape_with_aiohttp,
             self._scrape_with_playwright,
             self._scrape_with_selenium

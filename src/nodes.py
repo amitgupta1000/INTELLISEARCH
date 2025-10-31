@@ -1,6 +1,6 @@
 # nodes.py
 # This file contains the individual nodes (functions) for the LangGraph workflow.
-# Using llm call from Langchain-ChatTogether for generating search strings, evaluations etc., and Together client for report writing for verbosity
+# Using llm call from Langchain-ChatGoogleGenerativeAI for generating search strings, evaluations etc., and Google GenAI for report writing for verbosity
 
 import logging
 import json

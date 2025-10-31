@@ -46,15 +46,10 @@ def get_env_list(key: str, default: List[str] = None, separator: str = ',') -> L
 # API CONFIGURATION
 # =============================================================================
 
-# API Keys
+# API Keys (Google-only configuration)
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 SERPER_API_KEY = os.getenv("SERPER_API_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-VOYAGE_API_KEY = os.getenv("VOYAGE_API_KEY")
-GOOGLE_CSE_API_KEY = os.getenv("GOOGLE_CSE_API_KEY")
-GOOGLE_CSE_ID = os.getenv("GOOGLE_CSE_ID")
+
 
 # =============================================================================
 # LLM CONFIGURATION
@@ -62,7 +57,7 @@ GOOGLE_CSE_ID = os.getenv("GOOGLE_CSE_ID")
 
 PRIMARY_LLM_PROVIDER = os.getenv("PRIMARY_LLM_PROVIDER", "google")
 GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-2.0-flash")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
 
 # Embedding Configuration
 EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "google")
@@ -229,12 +224,11 @@ logging.info("config.py loaded successfully with unified environment-based confi
 
 # Export commonly used values for backward compatibility
 __all__ = [
-    # API Keys
-    'GOOGLE_API_KEY', 'TOGETHER_API_KEY', 'SERPER_API_KEY', 'OPENAI_API_KEY',
-    'ANTHROPIC_API_KEY', 'VOYAGE_API_KEY',
+    # API Keys (Google-only)
+    'GOOGLE_API_KEY', 'SERPER_API_KEY',
     
     # LLM Configuration  
-    'PRIMARY_LLM_PROVIDER', 'GOOGLE_MODEL', 'OPENAI_MODEL', 'EMBEDDING_MODEL',
+    'PRIMARY_LLM_PROVIDER', 'GOOGLE_MODEL', 'EMBEDDING_MODEL',
     'LLM_TEMPERATURE', 'MAX_TOKENS',
     
     # Search and Processing
