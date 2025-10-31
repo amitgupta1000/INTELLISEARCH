@@ -56,31 +56,20 @@ if %errorlevel% neq 0 (
 echo Validating LangChain/LangGraph imports...
 python -c "from src.import_validator import validate_imports; v = validate_imports(); v.print_status_report(); exit(0 if not v.get_missing_packages() else 1)" >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Installing required packages...
+    echo Installing required packages from requirements.txt...
     echo This may take a few minutes...
+    
+    :: Upgrade core tools first
     python -m pip install --upgrade pip setuptools wheel
     
-    :: Install core packages first
-    echo Installing core packages...
-    pip install "requests>=2.31.0" "python-dotenv>=1.0.0" "pydantic>=2.8.0" "nest_asyncio>=1.5.6"
-    
-    :: Install LangChain packages
-    echo Installing LangChain packages...
-    pip install "langchain>=0.1.0" "langgraph>=0.1.0" "langchain-core>=0.1.0" "langchain-community>=0.1.0" "langchain-text-splitters>=0.1.0"
-    
-    :: Install provider packages
-    echo Installing LLM provider packages...
-    pip install "langchain-google-genai>=1.0.0" "google-genai>=1.0.0" "langchain-together" "langchain-anthropic" "anthropic>=0.25.0" "together>=1.0.0"
-    
-    :: Install additional packages
-    echo Installing additional packages...
-    pip install "beautifulsoup4>=4.12.2" "aiohttp>=3.9.0" "requests-html>=0.10.0" "lxml>=5.0.0" "ratelimit>=2.2.1"
-    pip install "pymupdf>=1.23.0" "pypdf>=4.0.0" "fpdf2>=2.8.0" "trafilatura>=1.7.2" "rank_bm25>=0.2.2" "rich>=13.3.4"
-    
-    :: Try installing requirements file as backup
+    :: Install all packages from requirements.txt
     if exist "requirements.txt" (
-        echo Installing from requirements.txt...
+        echo Installing packages from requirements.txt...
         pip install -r requirements.txt
+    ) else (
+        echo ERROR: requirements.txt file not found
+        pause
+        exit /b 1
     )
     
     echo.
