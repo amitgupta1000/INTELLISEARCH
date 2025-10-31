@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Settings, Key, Sparkles, FileText, Zap } from 'lucide-react';
+import { MagnifyingGlassIcon, Cog6ToothIcon, KeyIcon, SparklesIcon, DocumentTextIcon, BoltIcon } from '@heroicons/react/24/outline';
 import { useResearch } from '../context/ResearchContext';
 import type { ResearchRequest } from '../types';
 
@@ -38,7 +38,7 @@ const ResearchForm: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-4">
         <h2 className="text-2xl font-bold text-gray-900 flex items-center justify-center space-x-3">
-          <Sparkles className="w-6 h-6 text-primary-600" />
+          <SparklesIcon className="w-6 h-6 text-primary-600" />
           <span>Start Your Research</span>
         </h2>
         <p className="text-gray-600">
@@ -108,7 +108,7 @@ const ResearchForm: React.FC = () => {
                     : 'border-gray-300 bg-white hover:border-gray-400 hover:shadow-sm'
                 }`}>
                   <div className="flex items-center space-x-3 mb-3">
-                    <Zap className={`w-5 h-5 ${reportType === 'concise' ? 'text-primary-600' : 'text-gray-500'}`} />
+                    <BoltIcon className={`w-5 h-5 ${reportType === 'concise' ? 'text-primary-600' : 'text-gray-500'}`} />
                     <div className="font-semibold text-lg">Concise Report</div>
                   </div>
                   <div className="text-sm text-gray-600 space-y-1">
@@ -135,7 +135,7 @@ const ResearchForm: React.FC = () => {
                     : 'border-gray-300 bg-white hover:border-gray-400 hover:shadow-sm'
                 }`}>
                   <div className="flex items-center space-x-3 mb-3">
-                    <FileText className={`w-5 h-5 ${reportType === 'detailed' ? 'text-primary-600' : 'text-gray-500'}`} />
+                    <DocumentTextIcon className={`w-5 h-5 ${reportType === 'detailed' ? 'text-primary-600' : 'text-gray-500'}`} />
                     <div className="font-semibold text-lg">Detailed Report</div>
                   </div>
                   <div className="text-sm text-gray-600 space-y-1">
@@ -157,7 +157,7 @@ const ResearchForm: React.FC = () => {
               className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
               disabled={state.isLoading}
             >
-              <Settings className="w-4 h-4" />
+              <Cog6ToothIcon className="w-4 h-4" />
               <span>Advanced Settings</span>
               <span className="text-xs bg-gray-100 px-2 py-1 rounded">Optional</span>
             </button>
@@ -165,7 +165,7 @@ const ResearchForm: React.FC = () => {
             {showApiKeys && (
               <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-4">
                 <div className="flex items-center space-x-2 mb-3">
-                  <Key className="w-4 h-4 text-gray-500" />
+                  <KeyIcon className="w-4 h-4 text-gray-500" />
                   <span className="font-medium text-gray-700">Custom API Keys</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -211,7 +211,7 @@ const ResearchForm: React.FC = () => {
             disabled={!query.trim() || state.isLoading}
             className="btn-primary w-full py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transition-all duration-200"
           >
-            <Search className="w-5 h-5" />
+            <MagnifyingGlassIcon className="w-5 h-5" />
             <span>{state.isLoading ? 'Researching...' : 'Start Research'}</span>
           </button>
         </form>
