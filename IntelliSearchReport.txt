@@ -1,0 +1,126 @@
+# Specific Information Requested
+
+## Specific Information Requested
+
+This section provides specific data points and information regarding CG Power India, extracted directly from the provided sources, to support an equity research report. **Financial Metrics and Ratios:**
+
+*   **Market Capitalization (MCap):** ₹1,15,135 Cr [economictimes.indiatimes.com]
+*   **Market Cap/Sales:** 9.85 [economictimes.indiatimes.com]
+*   **PE Ratio:** 108.75 [economictimes.indiatimes.com]
+*   **EPS - TTM (₹):** 6.79 [economictimes.indiatimes.com]
+*   **Dividend Yield (%):** 0.18 [economictimes.indiatimes.com]
+*   **PB Ratio:** 28.63 [economictimes.indiatimes.com]
+*   **Face Value (₹):** 2.00 [economictimes.indiatimes.com]
+*   **BV/Share (₹):** 25.64 [economictimes.indiatimes.com]
+*   **VWAP (₹):** 734.20 [economictimes.indiatimes.com]
+*   **52 Week High/Low (₹):** 811.35 / 518.35 [economictimes.indiatimes.com]
+
+**Beta:**
+
+*   **1 Month:** 0.88 [economictimes.indiatimes.com]
+*   **3 Months:** 1.13 [economictimes.indiatimes.com]
+*   **6 Months:** 1.98 [economictimes.indiatimes.com]
+*   **1 Year:** 1.79 [economictimes.indiatimes.com]
+*   **3 Years:** 1.68 [economictimes.indiatimes.com]
+*   **Beta:** 0.88 [economictimes.indiatimes.com]
+*   **1 Month:** 0.97 [economictimes.indiatimes.com]
+*   **3 Months:** 1.20 [economictimes.indiatimes.com]
+*   **6 Months:** 2.02 [economictimes.indiatimes.com]
+*   **1 Year:** 1.83 [economictimes.indiatimes.com]
+*   **3 Years:** 1.73 [economictimes.indiatimes.com]
+*   **Beta:** 0.97 [economictimes.indiatimes.com]
+
+**Share Price Returns:**
+
+*   **1 Day:** 0.7% [economictimes.indiatimes.com]
+*   **1 Week:** 2.2% [economictimes.indiatimes.com]
+*   **1 Month:** -0.16% [economictimes.indiatimes.com]
+*   **3 Months:** 11.8% [economictimes.indiatimes.com]
+*   **1 Year:** 5.03% [economictimes.indiatimes.com]
+*   **3 Years:** 184.54% [economictimes.indiatimes.com]
+*   **5 Years:** 2256.05% [economictimes.indiatimes.com]
+*   **1 Day:** 0.85% [economictimes.indiatimes.com]
+*   **1 Week:** 2.31% [economictimes.indiatimes.com]
+*   **1 Month:** -0.07% [economictimes.indiatimes.com]
+*   **3 Months:** 11.91% [economictimes.indiatimes.com]
+*   **1 Year:** 5.07% [economictimes.indiatimes.com]
+*   **3 Years:** 184.46% [economictimes.indiatimes.com]
+*   **5 Years:** 2257.64% [economictimes.indiatimes.com]
+
+**Peer Comparison (Market Cap in Cr):** [m.moneycontrol.com]
+
+*   **ABB India:** 111,273.09
+*   **Apar Ind:** 34,855.05
+*   **Bharat Bijlee:** 3,430.50
+*   **CG Power:** Not explicitly stated in the provided peer comparison table, but the main source lists it as ₹1,15,135 Cr [economictimes.indiatimes.com]
+
+**News & Analysis:**
+
+*   "CG Power shares zoom 14% in 4 days; here’s what’s driving the rally" [economictimes.indiatimes.com]
+*   "CG Power shares rally 12% in three sessions on semiconductor push" [economictimes.indiatimes.com]
+
+**Analyst Forecast:**
+
+*   The average price target for CG Power & Industrial Solutions Ltd in the last 3 months is ₹840.00 [tipranks.com]. *   The average price target represents a 16.25% change from the last price of ₹722.55 [tipranks.com]. *   High forecast: ₹840.00 [tipranks.com]
+*   Low forecast: ₹840.00 [tipranks.com]
+
+# Detailed Data and Analysis
+
+## 💰 Financial Performance Analysis
+
+### Analyst Recommendations and Price Targets
+
+*   **Average Price Target:** The average price target for CG Power & Industrial Solutions Ltd in the last 3 months is ₹840.00 [1]. *   **Price Target Range:** The price target ranges from a high forecast of ₹840.00 to a low forecast of ₹840.00 [1]. *   **Morgan Stanley's Target:** Morgan Stanley initiated coverage on CG Power with a target of ₹799 [2]. *   **Axis Securities Recommendation:** Axis Securities has a BUY recommendation with a target of ₹335 [2]. *   **Analyst Ratings:**
+    *   Currently, 14 analysts cover CG Power [2]. *   Analyst ratings include:
+        *   Buy: 10 [2]
+        *   Sell: 2 [2]
+        *   Strong Sell: 2 [2]
+*   **Trend in Analyst Ratings:**
+    *   The number of analysts with a "Buy" rating has increased from 6 three months ago to 10 currently [2]. *   The number of analysts covering the stock has increased from 10 three months ago to 14 currently [2]. ### Financial Ratios and Expense Analysis
+
+*   **Employee & Interest Expense:** CG Power has spent less than 1% of its operating revenues towards interest expenses and 6.18% towards employee cost in the year ending Mar 31, 2025 [2]. ### Peer Comparison
+
+*   **Peer Comparison:** CG Power & Industrial Solutions Ltd is compared with:
+    *   ABB India Ltd. (Share Price: 5,175.50) [3]
+    *   Bharat Heavy Electricals Ltd. (Share Price: 237.34) [3]
+    *   Siemens Ltd. (Share Price: 3,109.70) [3]
+
+### Stock Performance
+
+*   **Recent Stock Rally:** CG Power shares rallied 12% in three sessions due to a semiconductor push [2]. *   **Stock Jump:** Stock jumped 4% after Morgan Stanley initiated coverage [2]. # Supporting Evidence and Sources
+
+## Supporting Evidence and Sources
+
+This section provides supporting evidence and sources for the equity research report on CG Power & Industrial Solutions Ltd. It focuses on extracting specific data points and information relevant to the company's stock performance, peer comparison, and available resources for further analysis. **Peer Comparison:**
+
+*   According to Kotak Securities, a peer comparison for CG Power & Industrial Solutions Ltd. includes ABB India Ltd. (Share Price: 237.34) [https://www.kotaksecurities.com/stocks/cg-power-industrial-solutions-ltd/peer-comparison/]. Siemens Ltd. is also listed as a peer, with a share price of 3,109.70 [https://www.kotaksecurities.com/stocks/cg-power-industrial-solutions-ltd/peer-comparison/]. **Stock Information and Resources:**
+
+*   Moneycontrol.com provides stock price information, news, tips, and F&O quotes for CG Power & Industrial Solutions Ltd. [https://www.moneycontrol.com/india/stockpricequote/electric-equipment/cgpowerindustrialsolutions/CG]. This includes live BSE/NSE data and buy/sell recommendations. *   Moneycontrol also offers access to company news, analysis, and historical data for CG Power. *   TipRanks provides analyst forecasts, AI stock analysis, and financial data for CG Power & Industrial Solutions Ltd. (IN:CGPOWER) [https://www.tipranks.com/stocks/in:cgpower/forecast]. *   TipRanks offers an overview of CG Power & Industrial Solutions Ltd., including analyst forecasts, AI stock analysis, dividend information, earnings data, financials, and statistics [https://www.tipranks.com/stocks/in:cgpower/forecast]. **Trending Stocks (as listed on Moneycontrol):**
+
+*   LG Electronics (INE324D01010, LGEINDIA, 544576) [https://www.moneycontrol.com/india/stockpricequote/electric-equipment/cgpowerindustrialsolutions/CG]
+*   Vodafone Idea (INE669E01016, IDEA, 532822) [https://www.moneycontrol.com/india/stockpricequote/electric-equipment/cgpowerindustrialsolutions/CG]
+*   Ola Electric (INE0LXG01040, OLAELEC, 544225) [https://www.moneycontrol.com/india/stockpricequote/electric-equipment/cgpowerindustrialsolutions/CG]
+*   Suzlon Energy (INE040H01021, SUZLON, 532667) [https://www.moneycontrol.com/india/stockpricequote/electric-equipment/cgpowerindustrialsolutions/CG]
+*   TMPV (INE155A01022, TMPV, 500570) [https://www.moneycontrol.com/india/stockpricequote/electric-equipment/cgpowerindustrialsolutions/CG]
+
+This information provides a foundation for further analysis of CG Power & Industrial Solutions Ltd., including its competitive positioning and financial performance. # Additional Context and Implications
+
+### Additional Context and Implications
+
+This section provides additional context and implications for an equity research report on CG Power & Industrial Solutions Ltd, drawing from the provided sources. *   **Analyst Recommendations:** According to the Economic Times, the mean recommendation by 14 analysts is to HOLD CG Power shares [economictimes.indiatimes.com]. *   **Key Financial Metrics:** The Economic Times reports several key financial metrics for CG Power:
+    *   PE Ratio: 107.91x
+    *   EPS (TTM): ₹6.79
+    *   Market Cap: ₹1,15,545 Cr
+    *   PB Ratio: 28.65x
+    *   Dividend Yield: 0.18%
+    *   Face Value: ₹2.00 [economictimes.indiatimes.com]
+*   **Beta:** The beta values for CG Power, as reported by the Economic Times, are as follows:
+    *   1 Month: 0.88
+    *   3 Months: 1.13
+    *   6 Months: 1.98
+    *   1 Year: 1.79 [economictimes.indiatimes.com]
+*   **Shareholding Pattern:** Nuvama Research data indicates the following shareholding pattern:
+    *   Promoter: 56.37% (Sep-25)
+    *   FII: 13.02% (Sep-25)
+    *   DII: 16.26% (Sep-25) [bsmedia.business-standard.com]
+*   **Nuvama Research Rating:** Nuvama Research has a BUY rating on CG Power, with a 12-month price target of INR 870. The current price is INR 749 [bsmedia.business-standard.com]. *   **Business Updates:** CG Power's Q2FY26 results were modest due to the Industrials segment being affected by staggered execution and margin pressure. The Power segment showed strong momentum with significant YoY growth and margin expansion. The company is undertaking an INR7.8bn greenfield expansion and 35–40% of 60GVA transformer capacity additions [bsmedia.business-standard.com]. *   **Stock Price:** As of Oct 31, 2025, the stock price was ₹732.45, a decrease of -2.25 (-0.31%) [stockanalysis.com].

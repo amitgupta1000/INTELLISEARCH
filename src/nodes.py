@@ -1382,6 +1382,50 @@ def deduplicate_content(text: str) -> str:
     return ' '.join(unique_sentences)
 
 
+def generate_citations_section(relevant_chunks) -> tuple[str, dict]:
+    """
+    Generate a citations section from the relevant chunks, excluding it from word counts.
+    Returns (citations_text, source_mapping) where source_mapping maps URLs to citation numbers.
+    """
+    if not relevant_chunks:
+        return "", {}
+    
+    # Extract unique sources
+    sources = {}
+    source_mapping = {}
+    
+    for chunk in relevant_chunks:
+        source_url = chunk.metadata.get('source', 'Unknown URL')
+        title = chunk.metadata.get('title', 'Untitled')
+        
+        # Clean up the title if it's too long
+        if len(title) > 100:
+            title = title[:97] + "..."
+        
+        # Avoid duplicate sources
+        if source_url not in sources:
+            citation_number = len(sources) + 1
+            sources[source_url] = {
+                'index': citation_number,
+                'title': title,
+                'url': source_url
+            }
+            source_mapping[source_url] = citation_number
+    
+    # Format citations section
+    citations_text = "\n\n---\n\n# 📚 Sources and References\n\n"
+    citations_text += "*Note: This section is not included in the report word count.*\n\n"
+    
+    for source in sources.values():
+        citations_text += f"[{source['index']}] **{source['title']}**\n"
+        citations_text += f"    {source['url']}\n\n"
+    
+    citations_text += f"*Total sources referenced: {len(sources)}*\n"
+    citations_text += f"*Research conducted on: {get_current_date()}*"
+    
+    return citations_text, source_mapping
+
+
 async def write_report(state: AgentState):
     """
     Generates the final report and saves to text and PDF.
@@ -1608,6 +1652,9 @@ async def write_report(state: AgentState):
         for section in sanitized_sections:
             section["target_words"] = max(50, int(section["target_words"] * scale_factor))
 
+    # Generate citation mapping for use in sections
+    _, source_mapping = generate_citations_section(relevant_chunks)
+
     # 2) Expand each section individually with content distribution
     section_texts = []
     total_chunks = len(relevant_chunks)
@@ -1626,9 +1673,9 @@ async def write_report(state: AgentState):
         if i == len(sanitized_sections) - 1:
             section_chunks = relevant_chunks[start_idx:]
         
-        # Format section-specific chunks
+        # Format section-specific chunks with citation numbers
         section_formatted_chunks = "\n---\n".join([
-            f"Source: {chunk.metadata.get('source', 'Unknown URL')}\nContent:\n{chunk.page_content}"
+            f"[Citation {source_mapping.get(chunk.metadata.get('source', ''), 'N/A')}] Source: {chunk.metadata.get('source', 'Unknown URL')}\nContent:\n{chunk.page_content}"
             for chunk in section_chunks
         ])
 
@@ -1639,19 +1686,25 @@ async def write_report(state: AgentState):
         
         Target length: approximately {target_words} words. This is part of a {report_type} report (maximum {max_words} words total).
         
+        CITATION INSTRUCTIONS:
+        - Use numbered citations in brackets when referencing sources: [1], [2], etc.
+        - The citation numbers are provided in the content chunks below
+        - Example: "According to the study [3], the market grew by 15%"
+        - All major claims should include citation numbers
+        
         SPECIFIC INSTRUCTIONS FOR THIS SECTION:
         1. FIRST examine the research question to identify what specific information is being requested
         2. SCAN the provided content chunks for the exact data, values, numbers, names, or facts that answer the question
         3. EXTRACT and PRESENT the specific requested information prominently in this section
         4. Focus on UNIQUE information from your assigned content chunks - avoid repeating information that would appear in other sections
-        5. If the user asked for specific values, metrics, or data points - FIND them and state them clearly
-        6. If comparisons were requested - EXTRACT the comparison data and present it
-        7. If trends or changes were asked about - FIND the actual trend data and present it
-        8. Use direct quotes from sources when presenting key findings
-        9. Cite sources for specific data points: "According to [source_url], the value is X"
+        5. If the user asked for specific values, metrics, or data points - FIND them and state them clearly with citations [N]
+        6. If comparisons were requested - EXTRACT the comparison data and present it with citations [N]
+        7. If trends or changes were asked about - FIND the actual trend data and present it with citations [N]
+        8. Use direct quotes from sources with proper citations: "As stated in [2], 'direct quote here'"
+        9. Cite specific data points: "The value is X [1], which represents a Y% change [2]"
         
         AVOID generic statements like "X is important and should be evaluated carefully" 
-        INSTEAD provide specific information like "X has a value of Y, according to [source], which represents a Z% change from..."
+        INSTEAD provide specific information like "X has a value of Y [1], which represents a Z% change from the previous year [2]"
         
         AVOID REPETITION: This section should contain unique information not covered in other sections.
         
@@ -1748,33 +1801,43 @@ async def write_report(state: AgentState):
     logging.info("Applying content deduplication...")
     final_report_content = deduplicate_content(final_report_content)
     
-    # Final word count check and truncation if necessary
-    final_words = _word_count(final_report_content)
+    # Add citations section (excluded from word count)
+    citations_section, source_mapping = generate_citations_section(relevant_chunks)
+    final_report_with_citations = final_report_content + citations_section
+    logging.info("Added citations section with %d unique sources", len(source_mapping))
+    
+    # Final word count check and truncation if necessary (excluding citations)
+    final_words = _word_count(final_report_content)  # Count only main content, not citations
     if final_words > max_words:
         logging.warning("Report exceeds %d word limit (%d words). Truncating.", max_words, final_words)
         words = final_report_content.split()
         final_report_content = ' '.join(words[:max_words])
         final_words = max_words
+        # Regenerate citations after truncation
+        citations_section, source_mapping = generate_citations_section(relevant_chunks)
+        final_report_with_citations = final_report_content + citations_section
 
-    # Final logging and saving
+    # Final logging and saving (including citations in saved files)
     total_chars = len(final_report_content or "")
-    logging.info("Final %s report size: %d chars, %d words (limit: %d words)", report_type, total_chars, final_words, max_words)
+    total_chars_with_citations = len(final_report_with_citations or "")
+    logging.info("Final %s report size: %d chars, %d words (limit: %d words) + %d chars for citations", 
+                 report_type, total_chars, final_words, max_words, total_chars_with_citations - total_chars)
 
-    # Save to files
-    text_filename = save_report_to_text(final_report_content, REPORT_FILENAME_TEXT)
+    # Save to files (with citations)
+    text_filename = save_report_to_text(final_report_with_citations, REPORT_FILENAME_TEXT)
     if not text_filename:
          errors.append(f"Failed to save report to text file: {REPORT_FILENAME_TEXT}.")
          logging.error(errors[-1])
 
-    pdf_result_message = generate_pdf_from_md(final_report_content, REPORT_FILENAME_PDF)
+    pdf_result_message = generate_pdf_from_md(final_report_with_citations, REPORT_FILENAME_PDF)
     if "Error generating PDF" in pdf_result_message:
          errors.append(pdf_result_message)
          logging.error(pdf_result_message)
     else:
          logging.info(pdf_result_message)
 
-    # Update state and return
-    state["report"] = final_report_content
+    # Update state and return (with citations)
+    state["report"] = final_report_with_citations
     state["report_filename"] = text_filename
 
     current_error = state.get('error', '') or ''
