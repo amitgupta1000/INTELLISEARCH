@@ -77,7 +77,7 @@ GOOGLE_MODEL = os.getenv("GOOGLE_MODEL", "gemini-2.0-flash")
 
 # Embedding Configuration
 EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "google")
-EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "models/text-embedding-004")
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "models/text-embedding-005")
 
 # LLM Settings
 LLM_TEMPERATURE = get_env_float("LLM_TEMPERATURE", 0.1)  # Low temperature for factual research
