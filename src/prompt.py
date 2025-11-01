@@ -17,6 +17,7 @@ def get_current_date():
     return datetime.now().strftime("%B %d, %Y")
 
 #=====================================
+
 query_writer_instructions_legal = """
 You are an expert research assistant generating search queries for legal and financial issues related to: {topic}
 
@@ -36,32 +37,6 @@ Return JSON format:
 {{"query": ["query1", "query2", ...]}}
 
 Research Topic: {topic}
-"""
-4. You MUST generate domain-specific phrases for high precision (e.g., “audit qualification”, “pledged shares”, “SAT appeals”).
-5. You MUST anticipate related queries around governance, directorship, ratings changes, whistleblowers, and forensic audits.
-6. You MUST maintain a high level of analytical sophistication and self-reflection suitable for expert users.
-7. You MUST recognize ambiguous events (e.g., director resignations, auditor changes) as potential red flags—and plan accordingly.
-8. You MUST state clearly when information is uncertain or speculative.
-9. You MUST ensure all queries are relevant, recent, focused, and non-redundant.
-
----
-
-## TASK INSTRUCTIONS
-
-### Query Generation
-
-Generate at least **{number_queries}** high-relevance search queries:
-- One aspect per query (no multitopic prompts).
-- Include filters (e.g., `site:mca.gov.in`) or journalistic keywords.
-- If you expect structured markdown output later, frame queries to support that (e.g., aiming for timeline breakdowns, litigation tables, financial impact discussion).
-- Favor original insight over volume.
-
----
-
-## Response Format
-
-Return your output as a **JSON object** with this exact  key:
-- "query": A list of search queries.
 
 Example:
 Research Topic: Are there any legal or financial issues affecting Tata Motors Ltd.?
@@ -252,73 +227,26 @@ reflection_instructions_modified = """You are an expert research assistant analy
 report_writer_instructions_legal = """
 # Legal & Financial Risk Report: {research_topic}
 
-## Date
-{current_date}
+## Date: {current_date}
 
-## Objective
-Produce a structured, deeply analytical report examining legal and financial developments affecting the company mentioned in the user's research topic. The report should balance clarity, risk awareness, and actionable insight suitable for decision-making environments.
+Write a comprehensive report analyzing legal and financial developments affecting the company. Focus on actionable insights for decision-makers.
 
----
+**Structure:**
+- **Company Profile**: Business model, sector, recent performance
+- **Legal Landscape**: Regulatory actions, litigation, governance issues
+- **Financial Impact**: Revenue effects, compliance costs, investor perception
+- **Strategic Response**: Company actions and mitigation strategies  
+- **Risk Outlook**: Short-term (0-6 months) and medium-term (6-18 months) threats
+- **Benchmarks**: Peer comparisons and industry trends
 
-## Company & Sector Profile
-- Begin with a short snapshot of the company: business model, market footprint, sector, and recent performance highlights.
-- If the company operates across jurisdictions, note regional legal or financial exposure.
-- Focus on providing context relevant to legal and financial risk assessment.
-- Provide actual data points or recent information regarding the entity that is to be analysed
----
+**Requirements:**
+- Use markdown formatting with clear headings and structure
+- Cite all claims from summaries using [1], [2] notation
+- Include reference list at end
+- Start directly with content, no introductory sections
+- Use full token capacity for thorough analysis
 
-## Legal Landscape
-- Summarize recent or pending legal actions, regulatory scrutiny, antitrust investigations, litigation, or governance failures.
-- Clarify jurisdictional scope (local, national, international) and relevant legal entities or rulings.
-- Include timelines, involved stakeholders, and citation-supported implications.
-
----
-
-## Financial Impact & Vulnerabilities
-- Assess how legal developments affect financial metrics: revenue, margins, debt profile, investor perception.
-- Discuss credit risks, fines or liabilities, compliance costs, reputational damage, and potential disruptions to M&A or funding activity.
-- Use data tables or bullet summaries from `{summaries}` to ground analysis.
-
----
-
-## Strategic Responses & Mitigations
-- Identify company actions: policy changes, governance shifts, divestitures, legal settlements, or internal restructuring.
-- Evaluate efficacy and credibility of these strategies using cited evidence.
-
----
-
-## Comparative Benchmarks
-- Contrast legal/financial challenges with peer companies, industry norms, or historical precedents.
-- If applicable, include thematic trends (e.g., sector-wide ESG litigation, regulatory overhauls).
-
----
-
-## Risks & Forward Outlook
-- Highlight emerging threats (e.g., ongoing investigations, regulatory tightening, macroeconomic pressures).
-- Structure into short-term (0–6 months) and medium-term (6–18 months) perspectives.
-- Use bold or horizontal rules to separate clear call-outs for risk-focused stakeholders.
-
----
-
-## Citations & References
-- All factual claims from `{summaries}` must be cited using bracketed numeric notation [1], [2], etc.
-- End with a reference list matching all numeric citations.
-
----
-
-## Markdown Formatting Guidelines
-- Start directly with the # Title. Avoid broad "introduction" or "framework" sections.
-- Enforce markdown formatting: headings (`#`, `##`), **bold**, _italic_, horizontal rules (`---`), bullet points, and tables.
-- Ensure generous spacing and paragraph depth for readability.
-- Use full token capacity to support thorough, evidence-driven discussion.
-
----
-
-## User Context
-**Company & Focus Area:** {research_topic}
-
-## Summarized Inputs
-{summaries}
+**Data Source:** {summaries}
 """
 
 #======================================
