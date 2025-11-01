@@ -7,11 +7,21 @@ const ResearchForm: React.FC = () => {
   const { startResearch, state } = useResearch();
   const [query, setQuery] = useState('');
   const [reportType, setReportType] = useState<'concise' | 'detailed'>('concise');
+  const [promptType, setPromptType] = useState('general');
   const [showApiKeys, setShowApiKeys] = useState(false);
   const [apiKeys, setApiKeys] = useState({
     gemini: '',
     serper: '',
   });
+
+  const promptTypes = [
+    { value: 'general', label: 'General Research', description: 'Broad research across multiple topics and sources' },
+    { value: 'legal', label: 'Legal Research', description: 'Legal analysis and regulatory information' },
+    { value: 'macro', label: 'Macro Analysis', description: 'Economic and market trends analysis' },
+    { value: 'deepsearch', label: 'Deep Search', description: 'Comprehensive in-depth research' },
+    { value: 'person_search', label: 'Person Search', description: 'Research about specific individuals' },
+    { value: 'investment', label: 'Investment Research', description: 'Financial and investment analysis' }
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +30,7 @@ const ResearchForm: React.FC = () => {
     const request: ResearchRequest = {
       query: query.trim(),
       reportType,
+      promptType,
       apiKeys,
     };
 
@@ -146,6 +157,35 @@ const ResearchForm: React.FC = () => {
                   </div>
                 </div>
               </label>
+            </div>
+          </div>
+
+          {/* Research Objective Selection */}
+          <div className="space-y-4">
+            <label className="block text-lg font-semibold text-gray-800">
+              Choose Research Objective
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {promptTypes.map((type) => (
+                <label key={type.value} className="cursor-pointer">
+                  <input
+                    type="radio"
+                    value={type.value}
+                    checked={promptType === type.value}
+                    onChange={(e) => setPromptType(e.target.value)}
+                    className="sr-only"
+                    disabled={state.isLoading}
+                  />
+                  <div className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                    promptType === type.value
+                      ? 'border-primary-500 bg-primary-50 shadow-md'
+                      : 'border-gray-300 bg-white hover:border-gray-400 hover:shadow-sm'
+                  }`}>
+                    <div className="font-semibold text-base mb-1">{type.label}</div>
+                    <div className="text-sm text-gray-600">{type.description}</div>
+                  </div>
+                </label>
+              ))}
             </div>
           </div>
 

@@ -1,6 +1,7 @@
 export interface ResearchRequest {
   query: string;
   reportType: 'concise' | 'detailed';
+  promptType?: string;
   apiKeys: {
     gemini?: string;
     serper?: string;

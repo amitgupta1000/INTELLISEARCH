@@ -305,6 +305,7 @@ async def run_research_pipeline(session_id: str, request: ResearchRequest):
         initial_state = {
             "new_query": request.query,
             "report_type": request.report_type,
+            "prompt_type": getattr(request, 'prompt_type', 'general'),
             "non_interactive": True,  # Disable interactive prompts
             "auto_report_type": request.report_type,
             "reasoning_mode": True,
@@ -332,6 +333,14 @@ async def run_research_pipeline(session_id: str, request: ResearchRequest):
         
         session["current_step"] = "Analyzing research question..."
         session["progress"] = 15
+
+        # Check if INTELLISEARCH workflow is available
+        if not INTELLISEARCH_AVAILABLE or workflow_app is None:
+            logger.error("INTELLISEARCH workflow not available - check imports and API keys")
+            session["status"] = "failed"
+            session["error_message"] = "Research workflow not available. Please check API configuration."
+            session["updated_at"] = datetime.now()
+            return
         
         # Run the workflow with progress updates
         async def progress_callback(step_name: str, progress: int):
@@ -345,20 +354,28 @@ async def run_research_pipeline(session_id: str, request: ResearchRequest):
         
         # Execute the actual workflow
         try:
+            logger.info(f"Starting workflow with state: {initial_state}")
             final_state = workflow_app.invoke(initial_state)
+            logger.info(f"Workflow completed successfully")
             
             # Extract results from the final state
             report_content = final_state.get("report", "No report generated")
             sources = final_state.get("sources", [])
             citations = final_state.get("citations", [])
             
+            if not report_content or report_content == "No report generated":
+                logger.warning("Workflow completed but no report generated")
+                session["status"] = "failed"
+                session["error_message"] = "Research completed but no report was generated"
+                session["updated_at"] = datetime.now()
+                return
+            
         except Exception as workflow_error:
-            logger.error(f"Workflow execution failed: {workflow_error}")
-            # Fallback to simulation if workflow fails
-            final_state = await simulate_research_workflow(initial_state, progress_callback)
-            report_content = final_state.get("report", "No report generated")
-            sources = final_state.get("sources", [])
-            citations = final_state.get("citations", [])
+            logger.error(f"Workflow execution failed: {workflow_error}", exc_info=True)
+            session["status"] = "failed"
+            session["error_message"] = f"Research workflow failed: {str(workflow_error)}"
+            session["updated_at"] = datetime.now()
+            return
         
         # Update session with results
         session["status"] = "completed"

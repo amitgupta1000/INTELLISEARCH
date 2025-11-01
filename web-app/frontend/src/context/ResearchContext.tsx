@@ -108,7 +108,7 @@ export const ResearchProvider: React.FC<{ children: ReactNode }> = ({ children }
         body: JSON.stringify({
           query: request.query,
           report_type: request.reportType,
-          prompt_type: 'general',
+          prompt_type: request.promptType || 'general',
           automation_level: 'full'
         }),
       });
