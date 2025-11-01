@@ -28,6 +28,9 @@ try:
     from src.utils import get_current_date
     INTELLISEARCH_AVAILABLE = True
     logging.info("Successfully imported INTELLISEARCH modules")
+    logging.info(f"GOOGLE_API_KEY available: {bool(GOOGLE_API_KEY)}")
+    logging.info(f"SERPER_API_KEY available: {bool(SERPER_API_KEY)}")
+    logging.info(f"Workflow app type: {type(workflow_app)}")
 except ImportError as e:
     logging.error(f"Failed to import INTELLISEARCH modules: {e}")
     INTELLISEARCH_AVAILABLE = False
@@ -125,6 +128,19 @@ async def health_check():
             "google_ai": bool(GOOGLE_API_KEY),
             "serper_api": bool(SERPER_API_KEY)
         }
+    }
+
+# Debug endpoint
+@app.get("/api/debug")
+async def debug_info():
+    """Debug information"""
+    return {
+        "intellisearch_available": INTELLISEARCH_AVAILABLE,
+        "workflow_app_available": workflow_app is not None,
+        "google_api_key_set": bool(GOOGLE_API_KEY),
+        "serper_api_key_set": bool(SERPER_API_KEY),
+        "environment": os.getenv("ENVIRONMENT", "development"),
+        "python_path": sys.path[-3:],  # Last 3 entries
     }
 
 # Configuration endpoint

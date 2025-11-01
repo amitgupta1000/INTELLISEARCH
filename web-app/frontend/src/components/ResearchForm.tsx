@@ -53,7 +53,7 @@ const ResearchForm: React.FC = () => {
           <span>Start Your Research</span>
         </h2>
         <p className="text-gray-600">
-          Enter your research question and let our AI generate a comprehensive report
+          Enter your research question and choose your research objective for tailored analysis
         </p>
       </div>
 
