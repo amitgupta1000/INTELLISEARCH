@@ -6,22 +6,30 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 import nest_asyncio
 
-# Only apply nest_asyncio if we're not running under uvloop
+# Only apply nest_asyncio if we're not running under uvloop or in web/production environment
 try:
     loop = asyncio.get_event_loop()
-    if not isinstance(loop, type(asyncio.new_event_loop())):
-        # We're likely running under uvloop or another custom loop
-        logging.info("Skipping nest_asyncio.apply() - custom event loop detected")
+    loop_type = str(type(loop))
+    
+    # Check for uvloop or other production event loops
+    if 'uvloop' in loop_type.lower() or 'Loop' in loop_type:
+        logging.info(f"Skipping nest_asyncio.apply() - production event loop detected: {loop_type}")
+    elif not isinstance(loop, type(asyncio.new_event_loop())):
+        logging.info(f"Skipping nest_asyncio.apply() - custom event loop detected: {loop_type}")
     else:
         nest_asyncio.apply()
         logging.info("Applied nest_asyncio patch")
 except Exception as e:
-    try:
-        # If no event loop exists yet, it's safe to apply
-        nest_asyncio.apply()
-        logging.info("Applied nest_asyncio patch (no existing loop)")
-    except Exception as e2:
-        logging.warning(f"Could not apply nest_asyncio: {e2}")
+    # Check if we're in a web environment where nest_asyncio isn't needed
+    if os.getenv('PORT') or os.getenv('RENDER'):
+        logging.info("Web environment detected - skipping nest_asyncio")
+    else:
+        try:
+            # If no event loop exists yet, it might be safe to apply
+            nest_asyncio.apply()
+            logging.info("Applied nest_asyncio patch (no existing loop)")
+        except Exception as e2:
+            logging.warning(f"Could not apply nest_asyncio: {e2}")
 
 # Try importing LangChain components with error handling
 try:
