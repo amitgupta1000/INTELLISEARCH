@@ -120,20 +120,8 @@ def install_packages():
 
 # --- Import necessary modules after potential installation ---
 # This assumes packages are installed in the environment where this script runs.
-try:
-    import nest_asyncio
-    import os
-    
-    # Skip nest_asyncio in web/production environments
-    web_environment = bool(os.getenv('PORT') or os.getenv('RENDER') or os.getenv('UVICORN_HOST'))
-    
-    if web_environment:
-        logging.info("Web environment detected - skipping nest_asyncio in setup.py")
-    else:
-        nest_asyncio.apply()
-        logging.info("nest_asyncio applied.")
-except ImportError:
-    logging.warning("nest_asyncio not found. Ensure your environment supports nested event loops if needed.")
+# nest_asyncio removed - not needed for web deployment with FastAPI/uvicorn
+logging.info("Skipping nest_asyncio - not needed for web deployment")
 
 # Import API keys from unified configuration
 try:
