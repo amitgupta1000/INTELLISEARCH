@@ -6,24 +6,26 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 import nest_asyncio
 
-# Only apply nest_asyncio if we're not running under uvloop or in web/production environment
-try:
-    loop = asyncio.get_event_loop()
-    loop_type = str(type(loop))
-    
-    # Check for uvloop or other production event loops
-    if 'uvloop' in loop_type.lower() or 'Loop' in loop_type:
-        logging.info(f"Skipping nest_asyncio.apply() - production event loop detected: {loop_type}")
-    elif not isinstance(loop, type(asyncio.new_event_loop())):
-        logging.info(f"Skipping nest_asyncio.apply() - custom event loop detected: {loop_type}")
-    else:
-        nest_asyncio.apply()
-        logging.info("Applied nest_asyncio patch")
-except Exception as e:
-    # Check if we're in a web environment where nest_asyncio isn't needed
-    if os.getenv('PORT') or os.getenv('RENDER'):
-        logging.info("Web environment detected - skipping nest_asyncio")
-    else:
+# Skip nest_asyncio entirely in web/production environments
+web_environment = bool(os.getenv('PORT') or os.getenv('RENDER') or os.getenv('UVICORN_HOST'))
+
+if web_environment:
+    logging.info("Web environment detected - completely skipping nest_asyncio")
+else:
+    # Only apply nest_asyncio in local/development environments
+    try:
+        loop = asyncio.get_event_loop()
+        loop_type = str(type(loop))
+        
+        # Check for uvloop or other production event loops
+        if 'uvloop' in loop_type.lower() or 'Loop' in loop_type:
+            logging.info(f"Skipping nest_asyncio.apply() - production event loop detected: {loop_type}")
+        elif not isinstance(loop, type(asyncio.new_event_loop())):
+            logging.info(f"Skipping nest_asyncio.apply() - custom event loop detected: {loop_type}")
+        else:
+            nest_asyncio.apply()
+            logging.info("Applied nest_asyncio patch")
+    except Exception as e:
         try:
             # If no event loop exists yet, it might be safe to apply
             nest_asyncio.apply()
