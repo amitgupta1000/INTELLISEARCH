@@ -21,6 +21,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 # Import our existing INTELLISEARCH modules
+INTELLISEARCH_AVAILABLE = False
+workflow_app = None
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+SERPER_API_KEY = os.getenv("SERPER_API_KEY", "")
+
 try:
     from src.graph import app as workflow_app
     from src.nodes import AgentState
@@ -34,6 +39,10 @@ try:
 except ImportError as e:
     logging.error(f"Failed to import INTELLISEARCH modules: {e}")
     INTELLISEARCH_AVAILABLE = False
+    
+    # Fallback function
+    def get_current_date():
+        return datetime.now().strftime("%Y-%m-%d")
     
     # Define fallback classes for development
     class AgentState:
@@ -82,6 +91,12 @@ app.add_middleware(
 
 # Global storage for research sessions (in production, use Redis or database)
 research_sessions: Dict[str, Dict] = {}
+
+# Root endpoint
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {"message": "INTELLISEARCH API is running", "status": "active", "timestamp": datetime.now().isoformat()}
 
 # Pydantic models for API requests/responses
 class ResearchRequest(BaseModel):
