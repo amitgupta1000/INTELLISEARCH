@@ -45,8 +45,20 @@ export const ResearchProvider: React.FC<{ children: ReactNode }> = ({ children }
     
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      console.log('Using API URL:', apiUrl);
+      
+      // Health check first
+      try {
+        const healthResponse = await fetch(`${apiUrl}/api/health`);
+        const healthData = await healthResponse.json();
+        console.log('Health check:', healthData);
+      } catch (healthError) {
+        console.warn('Health check failed:', healthError);
+      }
       
       // Step 1: Start the research
+      console.log('Starting research with:', { query: request.query, report_type: request.reportType });
+      
       const startResponse = await fetch(`${apiUrl}/api/research/start`, {
         method: 'POST',
         headers: {
@@ -60,51 +72,78 @@ export const ResearchProvider: React.FC<{ children: ReactNode }> = ({ children }
         }),
       });
 
+      console.log('Start response status:', startResponse.status);
+      
       if (!startResponse.ok) {
-        throw new Error('Failed to start research');
+        const errorText = await startResponse.text();
+        console.error('Start response error:', errorText);
+        throw new Error(`Failed to start research: ${startResponse.status} - ${errorText}`);
       }
 
       const startResult = await startResponse.json();
+      console.log('Start result:', startResult);
+      
+      if (!startResult.success || !startResult.data?.session_id) {
+        throw new Error('Invalid response from server: missing session_id');
+      }
+      
       const sessionId = startResult.data.session_id;
+      console.log('Session ID:', sessionId);
 
       // Step 2: Poll for completion
       const pollForResult = async (): Promise<ResearchResult> => {
-        while (true) {
+        let attempts = 0;
+        const maxAttempts = 150; // 5 minutes max (150 * 2 seconds)
+        
+        while (attempts < maxAttempts) {
+          attempts++;
+          console.log(`Polling attempt ${attempts}/${maxAttempts}`);
+          
           const statusResponse = await fetch(`${apiUrl}/api/research/${sessionId}/status`);
+          
           if (!statusResponse.ok) {
-            throw new Error('Failed to check research status');
+            console.error('Status response error:', statusResponse.status);
+            throw new Error(`Failed to check research status: ${statusResponse.status}`);
           }
 
           const status = await statusResponse.json();
+          console.log('Status:', status);
           
           if (status.status === 'completed') {
+            console.log('Research completed, fetching result...');
+            
             // Get the final result
             const resultResponse = await fetch(`${apiUrl}/api/research/${sessionId}/result`);
             if (!resultResponse.ok) {
-              throw new Error('Failed to get research result');
+              throw new Error(`Failed to get research result: ${resultResponse.status}`);
             }
             
             const result = await resultResponse.json();
+            console.log('Final result:', result);
+            
             return {
-              report: result.report_content,
+              report: result.report_content || 'No report content available',
               sources: result.sources || [],
               wordCount: result.report_content ? result.report_content.split(' ').length : 0,
               citations: result.citations || [],
               timestamp: result.completed_at || new Date().toISOString()
             };
           } else if (status.status === 'failed') {
-            throw new Error('Research failed');
+            throw new Error(`Research failed: ${status.error_message || 'Unknown error'}`);
           }
           
           // Wait 2 seconds before polling again
           await new Promise(resolve => setTimeout(resolve, 2000));
         }
+        
+        throw new Error('Research timed out after 5 minutes');
       };
 
       const result = await pollForResult();
       dispatch({ type: 'RESEARCH_SUCCESS', payload: result });
       
     } catch (error) {
+      console.error('Research error:', error);
       dispatch({ 
         type: 'RESEARCH_ERROR', 
         payload: error instanceof Error ? error.message : 'An unknown error occurred' 
