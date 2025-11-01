@@ -80,7 +80,6 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000", 
         "http://localhost:5173",  # React dev servers
-        "https://intellisearch-frontend.onrender.com",  # Production frontend (old)
         "https://intellisearch-frontend-kdqh.onrender.com",  # Production frontend (actual)
         "https://*.onrender.com"  # Allow all Render subdomains
     ],
@@ -386,7 +385,7 @@ async def run_research_pipeline(session_id: str, request: ResearchRequest):
         # Execute the actual workflow
         try:
             logger.info(f"Starting workflow with state: {initial_state}")
-            final_state = workflow_app.invoke(initial_state)
+            final_state = await workflow_app.ainvoke(initial_state)
             logger.info(f"Workflow completed successfully")
             
             # Extract results from the final state
