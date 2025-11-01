@@ -425,28 +425,6 @@ async def run_research_pipeline(session_id: str, request: ResearchRequest):
         session["current_step"] = f"Error: {str(e)}"
         session["updated_at"] = datetime.now()
 
-# Temporary simulation function - replace with actual workflow
-async def simulate_research_workflow(initial_state: AgentState, progress_callback):
-    """Simulate the research workflow - replace with actual implementation"""
-    steps = [
-        ("Analyzing research question...", 25),
-        ("Searching for relevant information...", 40),
-        ("Scraping and processing content...", 55),
-        ("Analyzing and evaluating sources...", 70),
-        ("Generating report sections...", 85),
-        ("Finalizing report and citations...", 95)
-    ]
-    
-    for step_name, progress in steps:
-        await progress_callback(step_name, progress)
-        await asyncio.sleep(2)  # Simulate processing time
-    
-    # Return mock final state
-    return {
-        "report": f"# Research Report: {initial_state['new_query']}\n\nThis is a simulated report...",
-        "report_filename": "simulated_report.txt"
-    }
-
 if __name__ == "__main__":
     import uvicorn
     import os

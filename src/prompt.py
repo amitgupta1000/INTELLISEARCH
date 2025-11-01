@@ -44,14 +44,14 @@ These may include regulatory actions, audit qualifications, litigation history, 
 
 This task is divided into two stages:
 
-### 🧭 Stage 1: Strategic Planning
+### Stage 1: Strategic Planning
 
 Create a **rationale** that includes:
 - Your investigative priorities
 - Your source targeting strategy
 - How you interpret weak signals or indirect disclosures
 
-### 🔍 Stage 2: Query Generation
+### Stage 2: Query Generation
 
 Generate at least **{number_queries}** high-relevance search queries:
 - One aspect per query (no multitopic prompts).
@@ -61,7 +61,7 @@ Generate at least **{number_queries}** high-relevance search queries:
 
 ---
 
-## 🧾 Response Format
+## Response Format
 
 Return your output as a **JSON object** with these exact two keys:
    - "rationale": A string explaining your plan of action and why these queries are relevant.
@@ -293,60 +293,61 @@ reflection_instructions_modified = """You are an expert research assistant analy
 report_writer_instructions_legal = """
 # Legal & Financial Risk Report: {research_topic}
 
-## 📅 Date
+## Date
 {current_date}
 
-## 🎯 Objective
+## Objective
 Produce a structured, deeply analytical report examining legal and financial developments affecting the company mentioned in the user's research topic. The report should balance clarity, risk awareness, and actionable insight suitable for decision-making environments.
 
 ---
 
-## 🏢 Company & Sector Profile
+## Company & Sector Profile
 - Begin with a short snapshot of the company: business model, market footprint, sector, and recent performance highlights.
 - If the company operates across jurisdictions, note regional legal or financial exposure.
-
+- Focus on providing context relevant to legal and financial risk assessment.
+- Provide actual data points or recent information regarding the entity that is to be analysed
 ---
 
-## ⚖️ Legal Landscape
+## Legal Landscape
 - Summarize recent or pending legal actions, regulatory scrutiny, antitrust investigations, litigation, or governance failures.
 - Clarify jurisdictional scope (local, national, international) and relevant legal entities or rulings.
 - Include timelines, involved stakeholders, and citation-supported implications.
 
 ---
 
-## 📉 Financial Impact & Vulnerabilities
+## Financial Impact & Vulnerabilities
 - Assess how legal developments affect financial metrics: revenue, margins, debt profile, investor perception.
 - Discuss credit risks, fines or liabilities, compliance costs, reputational damage, and potential disruptions to M&A or funding activity.
 - Use data tables or bullet summaries from `{summaries}` to ground analysis.
 
 ---
 
-## 🧩 Strategic Responses & Mitigations
+## Strategic Responses & Mitigations
 - Identify company actions: policy changes, governance shifts, divestitures, legal settlements, or internal restructuring.
 - Evaluate efficacy and credibility of these strategies using cited evidence.
 
 ---
 
-## 📊 Comparative Benchmarks
+## Comparative Benchmarks
 - Contrast legal/financial challenges with peer companies, industry norms, or historical precedents.
 - If applicable, include thematic trends (e.g., sector-wide ESG litigation, regulatory overhauls).
 
 ---
 
-## 🚨 Risks & Forward Outlook
+## Risks & Forward Outlook
 - Highlight emerging threats (e.g., ongoing investigations, regulatory tightening, macroeconomic pressures).
 - Structure into short-term (0–6 months) and medium-term (6–18 months) perspectives.
 - Use bold or horizontal rules to separate clear call-outs for risk-focused stakeholders.
 
 ---
 
-## 📚 Citations & References
+## Citations & References
 - All factual claims from `{summaries}` must be cited using bracketed numeric notation [1], [2], etc.
 - End with a reference list matching all numeric citations.
 
 ---
 
-## ✒️ Markdown Formatting Guidelines
+## Markdown Formatting Guidelines
 - Start directly with the # Title. Avoid broad "introduction" or "framework" sections.
 - Enforce markdown formatting: headings (`#`, `##`), **bold**, _italic_, horizontal rules (`---`), bullet points, and tables.
 - Ensure generous spacing and paragraph depth for readability.
@@ -354,10 +355,10 @@ Produce a structured, deeply analytical report examining legal and financial dev
 
 ---
 
-## 🔎 User Context
+## User Context
 **Company & Focus Area:** {research_topic}
 
-## 🧵 Summarized Inputs
+## Summarized Inputs
 {summaries}
 """
 
@@ -368,22 +369,22 @@ Produce a structured, deeply analytical report examining legal and financial dev
 report_writer_instructions_general = """
 # Research Report: {research_topic}
 
-## 📅 Date
+## Date
 {current_date}
 
-## 🎯 Objective
+## Objective
 Produce a detailed and structured report addressing the user's research topic. The report must be fact-rich, well-organized, and suitable for informed decision-makers, stakeholders, or analysts across industries.
 
 ---
 
-## 🌐 Contextual Overview
+## Contextual Overview
 - Begin with an in-depth analysis of the current all relevant aspects relevant to {research_topic}, and list precise facts if available.
 - Highlight recent developments, key players, policy updates, technological shifts, or public sentiment where applicable.
 - Include supportive examples and cite factual content from the provided data summaries.
 
 ---
 
-## 🔍 Thematic Analysis
+## Thematic Analysis
 - Identify 3–5 major themes or areas of discussion emerging from the research topic.
 - For each theme, include:
   - Historical context or origin
@@ -393,27 +394,27 @@ Produce a detailed and structured report addressing the user's research topic. T
 
 ---
 
-## 🧮 Data Insights
+## Data Insights
 - Use any quantifiable information (statistics, trends, financials, projections) extracted from summaries.
 - Present using bullet points, tables, or code blocks for clarity.
 - Visual structure should enhance readability and insight.
 
 ---
 
-## ⚠️ Risks & Uncertainties
+## Risks & Uncertainties
 - Analyze unknowns, open questions, and potential risk factors.
 - Discuss what is missing from public discourse, data gaps, or controversial viewpoints.
 - Use markdown callouts (e.g., blockquotes or bolded statements) to make this section stand out.
 
 ---
 
-## 📚 Citations & References
+## Citations & References
 - All claims derived from summaries must be cited using [1], [2], etc.
 - Provide a reference list at the end, matching the bracketed numbers throughout the text.
 
 ---
 
-## ✒️ Writing Guidelines
+## Writing Guidelines
 - Begin directly with the # Title. Avoid generic preambles like “Introduction” or “Executive Summary.”
 - Use markdown features: headings (`#`, `##`, `###`), bold, italics, horizontal rules
 """
@@ -423,52 +424,52 @@ Produce a detailed and structured report addressing the user's research topic. T
 report_writer_instructions_macro = """
 # Commodity Macro Report: {research_topic}
 
-## 📅 Date
+## Date
 {current_date}
 
-## 🧭 Purpose
+## Purpose
 Produce a comprehensive macroeconomic report focused on the commodity mentioned in the user's research topic. This report is intended for professional economic analysts and investment decision-makers.
 
 ---
 
-## 🔍 Recent Developments
+## Recent Developments
 - Begin with an in-depth overview of recent price trends, geopolitical shifts, regulatory updates, and macroeconomic conditions impacting {research_topic}.
 - Include relevant global events, policy announcements, and institutional positions.
 - Use paragraph form with examples and cite supporting data from the summaries.
 
 ---
 
-## 📈 Market Dynamics
+## Market Dynamics
 ### Supply & Demand Analysis
 - Examine seasonal effects, trade flows, inventories, and producer/consumer behavior.
 - Explore macroeconomic influences such as interest rates, inflation, and currency volatility.
 - Use tables and cited data for clarity.
 
 ### Outlook
-- Short-Term (0–3 months): Provide concrete forecasts and expectations.
-- Medium-Term (3–12 months): Highlight structural trends, risks, and emerging signals.
+- Short-Term (0=3 months): Provide concrete forecasts and expectations.
+- Medium-Term (3=12 months): Highlight structural trends, risks, and emerging signals.
 
 ---
 
-## ⚠️ Risks & Uncertainties
+## Risks & Uncertainties
 - Analyze potential disruptions including policy shifts, weather anomalies, supply chain instability, and political tensions.
 - Use bullet points or markdown formatting to make risks stand out.
 
 ---
 
-## 🧠 Theoretical Context & Applications
+## Theoretical Context & Applications
 - Discuss historical trends, economic models relevant to commodity pricing, and global macroeconomic theories.
 - Incorporate regional case studies and comparative analysis when possible.
 
 ---
 
-## 📚 References
+## References
 - All factual claims derived from summaries must be cited using [1], [2], etc.
 - Provide a final reference list at the end using bracketed numeric citations.
 
 ---
 
-## ✒️ Writing & Formatting Requirements
+## Writing & Formatting Requirements
 - **Start directly with the # Title. Avoid preambles like 'Research Framework' or 'Objective'.**
 - Use markdown (`#`, `##`, `**bold**`, `_italic_`, tables, horizontal rules) for structured readability.
 - Ensure sufficient spacing and paragraph depth throughout.
@@ -477,10 +478,10 @@ Produce a comprehensive macroeconomic report focused on the commodity mentioned 
 
 ---
 
-## 🔎 User Context
+## User Context
 **Research Topic:** {research_topic}
 
-## 🧵 Summarized Inputs
+## Summarized Inputs
 {summaries}
 """
 
@@ -543,15 +544,15 @@ Research Topic: {topic}
 report_writer_instructions_deepsearch = """
 # Factual Summary Report: {research_topic}
 
-## 📅 Date
+## Date
 {current_date}
 
-## 🎯 Objective
+## Objective
 Present a highly detailed report providing in-depth coverage of ALL relevant information about the research topic, with priority accorded to more recent information. This report is intended for users who want direct access to verified updates without interpretation or analysis.
 
 ---
 
-## 🔍 Key Findings
+## Key Findings
 - List the ALL facts, events, or updates discovered during the search.
 - Use bullet points or short paragraphs.
 - Include dates, names, and source references where available.
@@ -559,20 +560,20 @@ Present a highly detailed report providing in-depth coverage of ALL relevant inf
 
 ---
 
-## 🗂 Source Highlights
+## Source Highlights
 - Mention the leading (top-10) informative sources (e.g., Bloomberg, Reuters, SEBI, MCA, etc.).
 - Note any discrepancies or gaps in coverage.
 - If multiple sources confirm the same fact, mention that.
 
 ---
 
-## 📚 References
+## References
 - Use bracketed numeric citations [1], [2], etc. for any factual claims.
 - Provide a reference list at the end with source URLs or publication names.
 
 ---
 
-## ✒️ Formatting Guidelines
+## Formatting Guidelines
 - Use markdown formatting: headings (`#`, `##`), bullet points, bold, horizontal rules.
 - Keep tone neutral and factual.
 - Avoid interpretation, synthesis, or opinion.
@@ -632,7 +633,7 @@ Your goal is to search across multiple social media platforms, professional netw
 
 This task is divided into two stages:
 
-### 🧭 Stage 1: Strategic Planning
+### Stage 1: Strategic Planning
 
 Create a **rationale** that includes:
 - Your person search methodology
@@ -640,7 +641,7 @@ Create a **rationale** that includes:
 - How you'll verify information across multiple sources
 - Ethical considerations and privacy boundaries
 
-### 🔍 Stage 2: Query Generation
+### Stage 2: Query Generation
 
 Generate at least **{number_queries}** targeted search queries:
 - Platform-specific queries using site: filters
@@ -652,7 +653,7 @@ Generate at least **{number_queries}** targeted search queries:
 
 ---
 
-## 🧾 Response Format
+## Response Format
 
 Return your output as a **JSON object** with these exact two keys:
    - "rationale": A string explaining your person search strategy and ethical approach.
@@ -689,15 +690,15 @@ Research Topic: {topic}
 report_writer_instructions_person_search = """
 # Digital Profile Report: {research_topic}
 
-## 📅 Date
+## Date
 {current_date}
 
-## 🎯 Objective
+## Objective
 Construct a comprehensive digital profile of the individual based on publicly available information gathered from multiple online platforms, professional networks, social media, and legal databases. This report synthesizes information to create a holistic view of the person's professional background, public presence, and achievements.
 
 ---
 
-## 👤 Personal & Professional Overview
+## Personal & Professional Overview
 - Full name, current position, and primary professional affiliations
 - Educational background and qualifications
 - Career timeline and major professional milestones
@@ -705,7 +706,7 @@ Construct a comprehensive digital profile of the individual based on publicly av
 
 ---
 
-## 💼 Professional Network Analysis
+## Professional Network Analysis
 ### LinkedIn & Professional Presence
 - Professional experience and career progression
 - Skills, endorsements, and recommendations
@@ -719,7 +720,7 @@ Construct a comprehensive digital profile of the individual based on publicly av
 
 ---
 
-## 📱 Social Media Footprint
+## Social Media Footprint
 ### Twitter/X Presence
 - Professional opinions and thought leadership
 - Industry engagement and discussions
@@ -734,7 +735,7 @@ Construct a comprehensive digital profile of the individual based on publicly av
 
 ---
 
-## ⚖️ Legal & Regulatory Involvement
+## Legal & Regulatory Involvement
 ### Court Cases & Legal Matters
 - Any involvement in legal cases (IndiaKanoon.org, CaseMine.com)
 - Business litigation or regulatory matters
@@ -743,7 +744,7 @@ Construct a comprehensive digital profile of the individual based on publicly av
 
 ---
 
-## 🏆 Achievements & Recognition
+## Achievements & Recognition
 - Professional awards and honors
 - Industry recognition and accolades
 - Speaking engagements and conferences
@@ -752,7 +753,7 @@ Construct a comprehensive digital profile of the individual based on publicly av
 
 ---
 
-## 🌐 Digital Reputation Analysis
+## Digital Reputation Analysis
 - Overall online presence and digital footprint
 - Professional brand consistency across platforms
 - Public perception and sentiment analysis
@@ -760,7 +761,7 @@ Construct a comprehensive digital profile of the individual based on publicly av
 
 ---
 
-## 🔗 Cross-Platform Verification
+## Cross-Platform Verification
 - Information consistency across multiple sources
 - Verification of claims and achievements
 - Identification of any discrepancies or inconsistencies
@@ -768,7 +769,7 @@ Construct a comprehensive digital profile of the individual based on publicly av
 
 ---
 
-## 📊 Network & Influence Analysis
+## Network & Influence Analysis
 - Professional network size and quality
 - Industry connections and relationships
 - Thought leadership and influence metrics
@@ -776,14 +777,14 @@ Construct a comprehensive digital profile of the individual based on publicly av
 
 ---
 
-## 📚 Citations & References
+## Citations & References
 - All information must be cited using bracketed numeric notation [1], [2], etc.
 - Include platform sources (LinkedIn, Twitter, Facebook, etc.)
 - Provide reference list with source URLs and publication dates
 
 ---
 
-## ⚠️ Ethical Considerations & Limitations
+## Ethical Considerations & Limitations
 - Note any information gaps or unavailable data
 - Highlight the distinction between public and private information
 - Acknowledge potential privacy boundaries respected
@@ -791,7 +792,7 @@ Construct a comprehensive digital profile of the individual based on publicly av
 
 ---
 
-## ✒️ Formatting Guidelines
+## Formatting Guidelines
 - Use markdown formatting: headings (`#`, `##`), **bold**, _italic_, bullet points, tables
 - Maintain professional and respectful tone throughout
 - Present information objectively without judgment
@@ -799,10 +800,10 @@ Construct a comprehensive digital profile of the individual based on publicly av
 
 ---
 
-## 🔎 User Context
+## User Context
 **Person Profile Subject:** {research_topic}
 
-## 🧵 Extracted Information
+## Extracted Information
 {summaries}
 """
 
@@ -859,7 +860,7 @@ Your goal is to analyze the company from multiple investment angles including fi
 
 This task is divided into two stages:
 
-### 🧭 Stage 1: Strategic Planning
+### Stage 1: Strategic Planning
 
 Create a **rationale** that includes:
 - Your investment research methodology
@@ -867,7 +868,7 @@ Create a **rationale** that includes:
 - Sources prioritization strategy (exchanges, regulatory filings, analyst reports)
 - How you'll assess both opportunities and risks
 
-### 🔍 Stage 2: Query Generation
+### Stage 2: Query Generation
 
 Generate at least **{number_queries}** targeted investment research queries:
 - Financial performance and metrics queries
@@ -879,7 +880,7 @@ Generate at least **{number_queries}** targeted investment research queries:
 
 ---
 
-## 🧾 Response Format
+## Response Format
 
 Return your output as a **JSON object** with these exact two keys:
    - "rationale": A string explaining your investment research strategy and analytical approach.
@@ -916,15 +917,15 @@ Research Topic: {topic}
 report_writer_instructions_investment = """
 # Investment Research Report: {research_topic}
 
-## 📅 Date
+## Date
 {current_date}
 
-## 🎯 Investment Thesis Overview
+## Investment Thesis Overview
 Provide a comprehensive investment analysis of the company, synthesizing financial performance, business fundamentals, growth prospects, and risk assessment to determine investment attractiveness and provide actionable recommendations.
 
 ---
 
-## 📊 Executive Summary
+## Executive Summary
 - **Investment Recommendation**: Buy/Hold/Sell with rationale
 - **Target Price**: Based on valuation analysis (if applicable)
 - **Key Investment Highlights**: Top 3-5 compelling reasons to invest or avoid
@@ -933,7 +934,7 @@ Provide a comprehensive investment analysis of the company, synthesizing financi
 
 ---
 
-## 💰 Financial Performance Analysis
+## Financial Performance Analysis
 ### Revenue & Profitability
 - Revenue growth trends (YoY, QoQ) across business segments
 - Margin analysis (Gross, EBITDA, Net) and trend comparison
@@ -951,7 +952,7 @@ Provide a comprehensive investment analysis of the company, synthesizing financi
 
 ---
 
-## 🏢 Business Fundamentals Assessment
+## Business Fundamentals Assessment
 ### Business Model Analysis
 - Revenue streams and business segment performance
 - Competitive advantages and economic moats
@@ -970,7 +971,7 @@ Provide a comprehensive investment analysis of the company, synthesizing financi
 
 ---
 
-## 📈 Growth Prospects & Opportunities
+## Growth Prospects & Opportunities
 ### Growth Drivers
 - Organic growth opportunities and market expansion
 - New product launches and innovation pipeline
@@ -985,7 +986,7 @@ Provide a comprehensive investment analysis of the company, synthesizing financi
 
 ---
 
-## ⚠️ Risk Analysis
+## Risk Analysis
 ### Business Risks
 - Industry cyclicality and market volatility
 - Competitive pressures and disruption threats
@@ -1006,7 +1007,7 @@ Provide a comprehensive investment analysis of the company, synthesizing financi
 
 ---
 
-## 🎯 Valuation & Price Target
+## Valuation & Price Target
 ### Valuation Methodology
 - Multiple valuation approaches (DCF, comparable multiples, asset-based)
 - Key assumptions and sensitivity analysis
@@ -1019,7 +1020,7 @@ Provide a comprehensive investment analysis of the company, synthesizing financi
 
 ---
 
-## 📋 Investment Recommendation
+## Investment Recommendation
 ### Bull Case Scenario
 - Best-case growth assumptions and catalysts
 - Upside potential and price targets
@@ -1037,7 +1038,7 @@ Provide a comprehensive investment analysis of the company, synthesizing financi
 
 ---
 
-## 📚 Data Sources & References
+## Data Sources & References
 - All financial data must be cited using bracketed numeric notation [1], [2], etc.
 - Include exchange filings, annual reports, analyst reports
 - Reference regulatory submissions and management commentary
@@ -1045,7 +1046,7 @@ Provide a comprehensive investment analysis of the company, synthesizing financi
 
 ---
 
-## ⚠️ Investment Disclaimers
+## Investment Disclaimers
 - Note data limitations and information gaps
 - Highlight assumptions and potential changes
 - Acknowledge market volatility and risk factors
@@ -1053,7 +1054,7 @@ Provide a comprehensive investment analysis of the company, synthesizing financi
 
 ---
 
-## ✒️ Formatting Guidelines
+## Formatting Guidelines
 - Use markdown formatting: headings (`#`, `##`), **bold**, _italic_, tables, bullet points
 - Include financial tables and charts where applicable
 - Maintain objective, analytical tone throughout
@@ -1061,10 +1062,10 @@ Provide a comprehensive investment analysis of the company, synthesizing financi
 
 ---
 
-## 🔎 Investment Context
+## Investment Context
 **Company Analysis Subject:** {research_topic}
 
-## 🧵 Financial & Business Data
+## Financial & Business Data
 {summaries}
 """
 
