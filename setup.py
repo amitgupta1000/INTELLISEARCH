@@ -122,8 +122,16 @@ def install_packages():
 # This assumes packages are installed in the environment where this script runs.
 try:
     import nest_asyncio
-    nest_asyncio.apply()
-    logging.info("nest_asyncio applied.")
+    import os
+    
+    # Skip nest_asyncio in web/production environments
+    web_environment = bool(os.getenv('PORT') or os.getenv('RENDER') or os.getenv('UVICORN_HOST'))
+    
+    if web_environment:
+        logging.info("Web environment detected - skipping nest_asyncio in setup.py")
+    else:
+        nest_asyncio.apply()
+        logging.info("nest_asyncio applied.")
 except ImportError:
     logging.warning("nest_asyncio not found. Ensure your environment supports nested event loops if needed.")
 
