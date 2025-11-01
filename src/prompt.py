@@ -114,22 +114,14 @@ GENERAL INSTRUCTIONS:
 
 TASK INSTRUCTIONS:
 
-Your task is divided into two stages:
-
-Stage 1: Based on the commodity mentioned, generate a plan of action that includes:
-    - Your investigative priorities (e.g., recent price behavior, geopolitical shocks, supply-demand imbalances, inventory reports, monetary policy influence).
-    - Key sources to search (e.g., Bloomberg, Reuters, EIA, OPEC, IMF, World Bank, Financial Times).
-    - How you'll interpret ambiguous signals (e.g., strategic reserve releases, production cuts, shipping delays).
-
-Stage 2: Prepare a minimum of {number_queries} unique queries to guide discovery.
+Your task: Prepare a minimum of {number_queries} unique queries to guide discovery.
     - Focus each query on a specific dimension of the commodity’s macro landscape.
     - Use authoritative filters or context signals (e.g., site:eia.gov, site:bloomberg.com).
     - Employ terms like “price outlook”, “supply risk”, “demand forecast”, “inventory buildup”, “producer sentiment”, “OPEC decision”.
     - Aim for queries that reveal near-term and medium-term implications.
 
 Format:
-- Format your response as a JSON object with these exact two keys:
-   - "rationale": A string explaining your macro strategy and why these queries matter.
+- Format your response as a JSON object with this key:
    - "query": A list of search queries.
 
 Example:
@@ -138,7 +130,6 @@ Research Topic: What are the near-term risks to crude oil prices globally?
 Output:
 ```json
 {{
-  "rationale": "To assess near-term risks to crude oil prices, I will prioritize searches on supply disruptions, geopolitical events, inventory data, and price outlooks from credible financial institutions. I will source updates from EIA, OPEC, IMF, Bloomberg, and Reuters, and include interpretation of indirect signals like strategic reserve activity or monetary tightening. This will provide insight into both price pressures and broader sentiment.",
   "query": [
     "Crude oil price outlook July 2025 site:bloomberg.com OR site:reuters.com",
     "Global oil inventory levels site:eia.gov",
@@ -173,20 +164,14 @@ GENERAL INSTRUCTIONS:
 
 TASK INSTRUCTIONS:
 
-Stage 1: Define a clear exploration strategy:
-    - Break down the topic into sub-themes (e.g., history, recent changes, scientific basis, public perception, policy debates).
-    - Identify reliable sources (e.g., Wikipedia, news portals, academic journals, government websites).
-    - Explain how you’ll balance depth and breadth, and deal with ambiguity.
-
-Stage 2: Produce a minimum of {number_queries} search queries:
+Produce a minimum of {number_queries} search queries:
     - One aspect per query (no multitopic prompts).
     - Avoid redundancy, but allow flexibility in phrasing to account for diverse search engine results.
     - You may include site-specific constraints where helpful (e.g., site:nature.com, site:nytimes.com).
     - Prefer phrasing that mirrors how users naturally ask questions.
 
 Format:
-- Format your response as a JSON object with these exact two keys:
-   - "rationale": Explanation of your research breakdown.
+- Format your response as a JSON object with this key:
    - "query": A list of search queries.
 
 Example:
@@ -195,7 +180,6 @@ Research Topic: What are the scientific and policy issues around climate geoengi
 Output:
 ```json
 {{
-  "rationale": "To understand the scientific and policy issues around climate geoengineering, I will investigate its historical evolution, technical methods (e.g., solar radiation management), risks and unintended effects, expert debates, and current global regulation. I'll refer to sources like Nature, IPCC, government policy briefings, and recent news coverage.",
   "query": [
     "History of geoengineering techniques site:wikipedia.org",
     "Solar radiation management risks site:nature.com",
@@ -517,7 +501,6 @@ You are a deep search assistant tasked with uncovering the most recent, relevant
 ## FORMAT
 
 Return a JSON object with:
-- "rationale": A short explanation of your search strategy.
 - "query": A list of search queries.
 
 Example:
@@ -526,7 +509,6 @@ Research Topic: Recent developments in Adani Group’s financial disclosures
 Output:
 ```json
 {{
-  "rationale": "To gather the latest factual updates on Adani Group’s financial disclosures, I will target news portals, exchange filings, and regulatory sources. I will focus on events from the past 12 months, including audit notes, rating changes, and debt restructuring.",
   "query": [
     "Adani Group financial disclosures August 2025 site:business-standard.com",
     "Adani Group audit notes site:nseindia.com OR site:bseindia.com",
@@ -631,18 +613,6 @@ Your goal is to search across multiple social media platforms, professional netw
 
 ## TASK INSTRUCTIONS
 
-This task is divided into two stages:
-
-### Stage 1: Strategic Planning
-
-Create a **rationale** that includes:
-- Your person search methodology
-- Platform prioritization strategy  
-- How you'll verify information across multiple sources
-- Ethical considerations and privacy boundaries
-
-### Stage 2: Query Generation
-
 Generate at least **{number_queries}** targeted search queries:
 - Platform-specific queries using site: filters
 - Professional background and career queries
@@ -655,8 +625,7 @@ Generate at least **{number_queries}** targeted search queries:
 
 ## Response Format
 
-Return your output as a **JSON object** with these exact two keys:
-   - "rationale": A string explaining your person search strategy and ethical approach.
+Return your output as a **JSON object** with this key:
    - "query": A list of search queries targeting different platforms and information types.
 
 Example:
@@ -665,7 +634,6 @@ Research Topic: Create a profile of Sundar Pichai
 Output:
 ```json
 {{
-  "rationale": "To create a comprehensive profile of Sundar Pichai, I will search across professional networks to understand his career trajectory, social media platforms for public statements and thought leadership, and legal databases for any business-related legal matters. I will prioritize professional information, educational background, and public achievements while maintaining ethical search practices and focusing only on publicly available information. I will cross-reference information across platforms to ensure accuracy.",
   "query": [
     "Sundar Pichai LinkedIn profile site:linkedin.com",
     "Sundar Pichai career background site:naukri.com",
@@ -858,18 +826,6 @@ Your goal is to analyze the company from multiple investment angles including fi
 
 ## TASK INSTRUCTIONS
 
-This task is divided into two stages:
-
-### Stage 1: Strategic Planning
-
-Create a **rationale** that includes:
-- Your investment research methodology
-- Key financial and business metrics to analyze
-- Sources prioritization strategy (exchanges, regulatory filings, analyst reports)
-- How you'll assess both opportunities and risks
-
-### Stage 2: Query Generation
-
 Generate at least **{number_queries}** targeted investment research queries:
 - Financial performance and metrics queries
 - Business fundamentals and competitive position queries
@@ -882,8 +838,7 @@ Generate at least **{number_queries}** targeted investment research queries:
 
 ## Response Format
 
-Return your output as a **JSON object** with these exact two keys:
-   - "rationale": A string explaining your investment research strategy and analytical approach.
+Return your output as a **JSON object** with this key:
    - "query": A list of search queries targeting different aspects of investment analysis.
 
 Example:
@@ -892,7 +847,6 @@ Research Topic: Investment analysis of Reliance Industries Ltd
 Output:
 ```json
 {{
-  "rationale": "To conduct comprehensive investment research on Reliance Industries Ltd, I will analyze financial performance across oil & gas and telecom/retail segments, assess business transformation strategy, evaluate growth prospects in digital and green energy, and analyze competitive positioning. I will target BSE/NSE filings, analyst reports, management commentary, and peer comparisons to build a complete investment thesis covering growth drivers, valuation metrics, and risk factors.",
   "query": [
     "Reliance Industries quarterly results Q2 2025",
     "Reliance Industries annual report 2024-25 financial performance site:ril.com",

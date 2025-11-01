@@ -254,7 +254,7 @@ class AgentState(TypedDict):
 # Pydantic models for LLM output validation (moved from initial cells)
 class SearchQueryResponse(BaseModel):
     """Represents the expected JSON structure from the create_queries LLM call."""
-    rationale: str = Field(description="The rationale for the generated search queries.")
+    rationale: Optional[str] = Field(default=None, description="The rationale for the generated search queries.")
     query: conlist(str, min_length=1) = Field(description="A list of search queries.")
 
 class EvaluationResponse(BaseModel):
@@ -336,7 +336,7 @@ async def create_queries(state: AgentState) -> AgentState:
                 current_date=get_current_date(),
                 topic=new_query
             )),
-            HumanMessage(content=f"User Query: {new_query}\n\nPlease provide a JSON object with the keys 'rationale' and 'query', where 'query' is a list of {number_queries} search queries.")
+            HumanMessage(content=f"User Query: {new_query}\n\nPlease provide a JSON object with the key 'query', where 'query' is a list of {number_queries} search queries.")
         ]
 
         try:
@@ -357,7 +357,7 @@ async def create_queries(state: AgentState) -> AgentState:
                     # Using model_validate_json for Pydantic V2 compatibility
                     try:
                         parsed_response = SearchQueryResponse.model_validate_json(cleaned_json_string)
-                        rationale = parsed_response.rationale
+                        rationale = parsed_response.rationale or "No rationale provided."
                         search_queries = parsed_response.query
 
                         if isinstance(search_queries, list) and all(isinstance(q, str) for q in search_queries):
