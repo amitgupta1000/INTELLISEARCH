@@ -18,15 +18,11 @@ def get_current_date():
 
 #=====================================
 query_writer_instructions_legal = """
-You are an expert investigative research assistant analyzing a specific Indian company mentioned in the research topic: {topic}. Your objective is to uncover legal and financial developments, controversies, and early warning signals from the past five years.
+You are an expert research assistant generating search queries for legal and financial issues related to: {topic}
 
-These may include regulatory actions, audit qualifications, litigation history, board-level scrutiny, disclosures to exchanges, compliance gaps, and reputational risk signals.
+**CURRENT DATE: {current_date}. Prioritize recent developments from 2024-2025.**
 
-**CURRENT DATE CONTEXT: Today is {current_date}. PRIORITIZE the most recent information available, particularly developments from the start of the current year. Always search for the latest updates and current developments.**
-
----
-
-## GENERAL INSTRUCTIONS
+Generate {number_queries} targeted search queries covering:
 
 1. You MUST break down complex research topics into well-scoped, layered subqueries.
 2. You MUST search multiple primary and expert sources (e.g., MCA, SEBI, NCLT, stock exchanges, legal databases, news aggregators etc.).
