@@ -13,12 +13,24 @@ try:
 except ImportError:
     logging.warning("dotenv not available, using system environment variables only")
 
+# Detect if we're in a production environment (Render, Heroku, etc.)
+PRODUCTION_MODE = bool(os.getenv('PORT') or os.getenv('RENDER') or os.getenv('DYNO'))
+
+if PRODUCTION_MODE:
+    logging.info("Production mode detected - using optimized defaults")
+else:
+    logging.info("Development mode - reading from environment variables")
+
 def get_env_bool(key: str, default: bool = False) -> bool:
     """Convert environment variable to boolean."""
+    if PRODUCTION_MODE:
+        return default  # Use defaults in production
     return os.getenv(key, str(default)).lower() in ('true', '1', 'yes', 'on')
 
 def get_env_int(key: str, default: int) -> int:
     """Convert environment variable to integer."""
+    if PRODUCTION_MODE:
+        return default  # Use defaults in production
     try:
         return int(os.getenv(key, str(default)))
     except ValueError:
@@ -27,6 +39,8 @@ def get_env_int(key: str, default: int) -> int:
 
 def get_env_float(key: str, default: float) -> float:
     """Convert environment variable to float."""
+    if PRODUCTION_MODE:
+        return default  # Use defaults in production
     try:
         return float(os.getenv(key, str(default)))
     except ValueError:
@@ -35,6 +49,8 @@ def get_env_float(key: str, default: float) -> float:
 
 def get_env_list(key: str, default: List[str] = None, separator: str = ',') -> List[str]:
     """Convert environment variable to list."""
+    if PRODUCTION_MODE:
+        return default or []  # Use defaults in production
     if default is None:
         default = []
     value = os.getenv(key, '')
@@ -64,9 +80,9 @@ EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "google")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "models/text-embedding-004")
 
 # LLM Settings
-LLM_TEMPERATURE = get_env_float("LLM_TEMPERATURE", 0.1)
-MAX_TOKENS = get_env_int("MAX_TOKENS", 30000)
-DEFAULT_LLM_TIMEOUT = get_env_int("DEFAULT_LLM_TIMEOUT", 120)
+LLM_TEMPERATURE = get_env_float("LLM_TEMPERATURE", 0.1)  # Low temperature for factual research
+MAX_TOKENS = get_env_int("MAX_TOKENS", 30000)  # High token limit for comprehensive reports
+DEFAULT_LLM_TIMEOUT = get_env_int("DEFAULT_LLM_TIMEOUT", 120)  # Extended timeout for complex queries
 
 # Legacy support for old variable names
 DEFAULT_GEMINI_MODEL = GOOGLE_MODEL
@@ -82,20 +98,20 @@ DEFAULT_TEMPERATURE = LLM_TEMPERATURE
 # =============================================================================
 
 # Search limits
-MAX_SEARCH_QUERIES = get_env_int("MAX_SEARCH_QUERIES", 15)
-MAX_SEARCH_RESULTS = get_env_int("MAX_SEARCH_RESULTS", 10)
-MAX_CONCURRENT_SCRAPES = get_env_int("MAX_CONCURRENT_SCRAPES", 4)
-MAX_SEARCH_RETRIES = get_env_int("MAX_SEARCH_RETRIES", 2)
+MAX_SEARCH_QUERIES = get_env_int("MAX_SEARCH_QUERIES", 15)  # Multiple queries for comprehensive coverage
+MAX_SEARCH_RESULTS = get_env_int("MAX_SEARCH_RESULTS", 10)  # Balanced between quality and performance
+MAX_CONCURRENT_SCRAPES = get_env_int("MAX_CONCURRENT_SCRAPES", 4)  # Reasonable concurrency for stability
+MAX_SEARCH_RETRIES = get_env_int("MAX_SEARCH_RETRIES", 2)  # Limited retries to prevent hanging
 
 # AI iteration limits
 MAX_AI_ITERATIONS = get_env_int("MAX_AI_ITERATIONS", 3)
 MAX_USER_QUERY_LOOPS = get_env_int("MAX_USER_QUERY_LOOPS", 3)
 
 # Content processing
-CHUNK_SIZE = get_env_int("CHUNK_SIZE", 1000)
-CHUNK_OVERLAP = get_env_int("CHUNK_OVERLAP", 100)
-MAX_CONTENT_LENGTH = get_env_int("MAX_CONTENT_LENGTH", 10000)
-URL_TIMEOUT = get_env_int("URL_TIMEOUT", 30)
+CHUNK_SIZE = get_env_int("CHUNK_SIZE", 1000)  # Optimized for embedding model context
+CHUNK_OVERLAP = get_env_int("CHUNK_OVERLAP", 100)  # Minimal overlap for efficiency
+MAX_CONTENT_LENGTH = get_env_int("MAX_CONTENT_LENGTH", 10000)  # Reasonable limit per source
+URL_TIMEOUT = get_env_int("URL_TIMEOUT", 30)  # Quick timeout to prevent hanging
 
 # Legacy support
 MAX_RESULTS = MAX_SEARCH_RESULTS  # Backward compatibility
@@ -139,15 +155,15 @@ SKIP_EXTENSIONS = get_env_list("SKIP_EXTENSIONS", [
 # CACHING AND PERFORMANCE
 # =============================================================================
 
-CACHE_ENABLED = get_env_bool("CACHE_ENABLED", True)
-CACHE_TTL = get_env_int("CACHE_TTL", 86400)
+CACHE_ENABLED = get_env_bool("CACHE_ENABLED", True)  # Enabled for production performance
+CACHE_TTL = get_env_int("CACHE_TTL", 86400)  # 24 hours for good balance
 
 # Rate limiting
-MAX_CONCURRENT_CALLS = get_env_int("MAX_CONCURRENT_CALLS", 10)
-MAX_CALLS_PER_SECOND = get_env_int("MAX_CALLS_PER_SECOND", 30)
-BASE_DELAY = get_env_int("BASE_DELAY", 1)
-API_REQUESTS_PER_MINUTE = get_env_int("API_REQUESTS_PER_MINUTE", 30)
-SCRAPING_REQUESTS_PER_MINUTE = get_env_int("SCRAPING_REQUESTS_PER_MINUTE", 30)
+MAX_CONCURRENT_CALLS = get_env_int("MAX_CONCURRENT_CALLS", 10)  # Conservative for stability
+MAX_CALLS_PER_SECOND = get_env_int("MAX_CALLS_PER_SECOND", 30)  # Reasonable rate limiting
+BASE_DELAY = get_env_int("BASE_DELAY", 1)  # Small delay between requests
+API_REQUESTS_PER_MINUTE = get_env_int("API_REQUESTS_PER_MINUTE", 30)  # API-friendly limits
+SCRAPING_REQUESTS_PER_MINUTE = get_env_int("SCRAPING_REQUESTS_PER_MINUTE", 30)  # Respectful scraping
 
 # =============================================================================
 # AUTOMATION SETTINGS
@@ -244,10 +260,48 @@ __all__ = [
     # Caching
     'CACHE_ENABLED', 'CACHE_TTL',
     
+    # Debug and Production
+    'DEBUG_MODE', 'PRODUCTION_MODE',
+    
     # Colors
     'RED', 'GREEN', 'BLUE', 'YELLOW', 'ENDC',
     
     # Legacy support
     'MAX_RESULTS', 'DEFAULT_USER_AGENT', 'DEFAULT_GEMINI_MODEL'
 ]
+
+def validate_production_config():
+    """Validate critical configuration for production deployment."""
+    critical_missing = []
+    
+    # Check required API keys
+    if not GOOGLE_API_KEY:
+        critical_missing.append("GOOGLE_API_KEY")
+    if not SERPER_API_KEY:
+        critical_missing.append("SERPER_API_KEY")
+    
+    if critical_missing:
+        error_msg = f"Critical environment variables missing: {', '.join(critical_missing)}"
+        logging.error(error_msg)
+        raise ValueError(error_msg)
+    
+    # Log production mode status
+    if PRODUCTION_MODE:
+        logging.info("Running in PRODUCTION mode - using optimized defaults")
+        logging.info(f"LLM Temperature: {LLM_TEMPERATURE}")
+        logging.info(f"Max Search Results: {MAX_SEARCH_RESULTS}")
+        logging.info(f"Cache Enabled: {CACHE_ENABLED}")
+        logging.info(f"Debug Mode: {DEBUG_MODE}")
+    else:
+        logging.info("Running in DEVELOPMENT mode - reading from environment variables")
+    
+    return True
+
+# Validate configuration on import
+try:
+    validate_production_config()
+except Exception as e:
+    logging.error(f"Configuration validation failed: {e}")
+    if PRODUCTION_MODE:
+        raise  # Fail fast in production
 
