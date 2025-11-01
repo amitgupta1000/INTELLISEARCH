@@ -1040,7 +1040,7 @@ async def embed_index_and_extract(state: AgentState) -> AgentState:
     relevant_contexts = state.get("relevant_contexts", {})
     relevant_chunks = [] # Initialize relevant_chunks as a list of Documents
     errors = []
-    N_CHUNKS = 10 # Number of top relevant chunks to retrieve
+    N_CHUNKS = 20 # Increased from 10 to 20 for better context coverage
 
     # Retrieve current error state safely
     current_error_state = state.get('error')
@@ -1076,18 +1076,48 @@ async def embed_index_and_extract(state: AgentState) -> AgentState:
 
     try:
         # Initialize embedding model (already imported as embeddings)
-        logging.debug("Using embeddings: %s", type(embeddings).__name__)
+        if not embeddings:
+            error_msg = "Embeddings model not available - check Google API key configuration"
+            errors.append(error_msg)
+            logging.error(error_msg)
+            state["relevant_chunks"] = []
+            new_error = (str(current_error_state or '') + "\n" + error_msg).strip()
+            state['error'] = None if new_error == "" else new_error
+            return state
+            
+        logging.info("Using embeddings model: %s", type(embeddings).__name__)
+        logging.info("Processing %d document chunks for embedding", len(documents_content))
 
         # Process and chunk content # Use config constants for chunking
         from .config import CHUNK_SIZE, CHUNK_OVERLAP
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=CHUNK_SIZE, 
+            chunk_overlap=CHUNK_OVERLAP,
+            separators=["\n\n", "\n", ". ", "! ", "? ", " ", ""]  # Better separators for semantic chunks
+        )
 
         for url, content in relevant_contexts.items():
             if content:
+                # Filter out very short or low-quality content
+                if len(content.strip()) < 100:  # Skip very short content
+                    continue
+                    
                 chunks = text_splitter.split_text(content)
                 for i, chunk in enumerate(chunks):
-                    documents_content.append(chunk)
-                    document_metadatas.append({"source": url, "chunk_index": i})
+                    # Additional quality filters for chunks
+                    chunk_text = chunk.strip()
+                    if len(chunk_text) < 50:  # Skip very short chunks
+                        continue
+                    if len(chunk_text.split()) < 10:  # Skip chunks with less than 10 words
+                        continue
+                        
+                    documents_content.append(chunk_text)
+                    document_metadatas.append({
+                        "source": url, 
+                        "chunk_index": i,
+                        "chunk_length": len(chunk_text),
+                        "word_count": len(chunk_text.split())
+                    })
 
 
         if not documents_content:
@@ -1144,10 +1174,17 @@ async def embed_index_and_extract(state: AgentState) -> AgentState:
 
     try:
         if vector_db and hasattr(vector_db, 'as_retriever'):
-            # FAISS mode - perform vector similarity search
-            retriever = vector_db.as_retriever(search_kwargs={"k": N_CHUNKS})
+            # FAISS mode - perform vector similarity search with better configuration
+            retriever = vector_db.as_retriever(
+                search_type="similarity_score_threshold",
+                search_kwargs={
+                    "k": N_CHUNKS,
+                    "score_threshold": 0.1,  # Only retrieve reasonably relevant chunks
+                    "fetch_k": N_CHUNKS * 2  # Search more candidates for better selection
+                }
+            )
             relevant_chunks = retriever.invoke(retrieval_query)
-            logging.info("Retrieved %d relevant chunks for query '%s' using FAISS.", len(relevant_chunks), retrieval_query)
+            logging.info("Retrieved %d relevant chunks for query '%s' using FAISS with score threshold.", len(relevant_chunks), retrieval_query)
             
         elif vector_db and isinstance(vector_db, dict) and vector_db.get('type') == 'fallback':
             # Fallback mode - simple text matching
