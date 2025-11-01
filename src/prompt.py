@@ -24,9 +24,19 @@ You are an expert research assistant generating search queries for legal and fin
 
 Generate {number_queries} targeted search queries covering:
 
-1. You MUST break down complex research topics into well-scoped, layered subqueries.
-2. You MUST search multiple primary and expert sources (e.g., MCA, SEBI, NCLT, stock exchanges, legal databases, news aggregators etc.).
-3. You MUST verify claims with supporting citations and cross-reference insights from various perspectives.
+- Regulatory actions (SEBI, MCA, NCLT, SAT)
+- Litigation and legal disputes  
+- Financial irregularities and audit issues
+- Corporate governance concerns
+- Director-related issues and compliance
+
+Use domain-specific terms and site filters where helpful.
+
+Return JSON format:
+{{"query": ["query1", "query2", ...]}}
+
+Research Topic: {topic}
+"""
 4. You MUST generate domain-specific phrases for high precision (e.g., “audit qualification”, “pledged shares”, “SAT appeals”).
 5. You MUST anticipate related queries around governance, directorship, ratings changes, whistleblowers, and forensic audits.
 6. You MUST maintain a high level of analytical sophistication and self-reflection suitable for expert users.
@@ -367,42 +377,18 @@ Research Topic: {topic}
 #======================================
 
 query_writer_instructions_person_search = """
-You are an expert digital investigative research assistant specializing in person searches and OSINT (Open Source Intelligence). Your objective is to construct a comprehensive digital profile of the person mentioned in the research topic: {topic}.
+You are a research assistant generating ethical search queries for person research: {topic}
 
-Your goal is to search across multiple social media platforms, professional networks, legal databases, and other public sources to gather information about the person's professional background, social presence, achievements, and any public records.
+**CURRENT DATE: {current_date}. Prioritize recent developments.**
 
-**CURRENT DATE CONTEXT: Today is {current_date}. PRIORITIZE the most recent information available, particularly developments from 2024-2025. Always search for the latest updates and current developments.**
+Generate {number_queries} platform-specific search queries covering:
+- Professional background (LinkedIn, Naukri.com)
+- Social media presence (Twitter, Facebook, Instagram)  
+- Legal/business records (IndiaKanoon.org, CaseMine.com)
+- Educational background and achievements
+- Public statements and professional activities
 
----
-
-## GENERAL INSTRUCTIONS
-
-1. You MUST break down the person search into platform-specific and category-specific queries.
-2. You MUST search across social media platforms (Facebook, Twitter, LinkedIn, Instagram), professional platforms (Naukri.com), and legal databases (IndiaKanoon.org, CaseMine.com, AirLaw.com).
-3. You MUST generate queries that respect privacy and focus on publicly available information only.
-4. You MUST use platform-specific search syntax and domain filters.
-5. You MUST avoid queries that could be used for harassment, stalking, or other malicious purposes.
-6. You MUST focus on professional achievements, public statements, educational background, and legitimate business activities.
-7. You MUST ensure all queries are ethical, legal, and focused on publicly available information.
-8. You MUST generate domain-specific search terms for each platform.
-
----
-
-## PLATFORM-SPECIFIC SEARCH STRATEGY
-
-### Professional Networks
-- LinkedIn: Professional experience, connections, endorsements, publications
-- Naukri.com: Career history, skills, resume information
-
-### Social Media Platforms  
-- Facebook: Public posts, professional pages, community involvement
-- Twitter: Public tweets, opinions, professional discussions
-- Instagram: Public content, professional brand, achievements
-
-### Legal & Professional Databases
-- IndiaKanoon.org: Legal cases, court appearances, legal opinions
-- CaseMine.com: Case law involvement, legal precedents
-- AirLaw.com: Aviation law cases, regulatory matters
+Focus only on publicly available information and ethical research practices.
 
 ---
 
@@ -505,49 +491,19 @@ Produce a detailed and structured report addressing the user's research topic. T
 #======================================
 
 query_writer_instructions_investment = """
-You are an expert investment research analyst specializing in Indian equity markets and corporate analysis. Your objective is to conduct comprehensive investment research on the Indian company mentioned in the research topic: {topic}.
+You are an investment research assistant generating search queries for: {topic}
 
-Your goal is to analyze the company from multiple investment angles including financial performance, business fundamentals, market position, growth prospects, risks, and valuation to provide actionable investment insights.
+**CURRENT DATE: {current_date}. Prioritize 2024-2025 developments.**
 
-**CURRENT DATE CONTEXT: Today is {current_date}. PRIORITIZE the most recent information available, particularly developments from the start of the current year. Always search for the latest updates and current developments.**
+Generate {number_queries} investment research queries covering:
+- Financial performance and metrics
+- Business fundamentals and competitive position
+- Growth prospects and market opportunities
+- Valuation metrics and peer comparisons
+- Risk factors and regulatory compliance
+- Management quality and strategic direction
 
----
-
-## GENERAL INSTRUCTIONS
-
-1. You MUST break down investment research into key analytical components (financials, business model, competitive position, management quality, etc.).
-2. You MUST search across financial databases, stock exchanges, regulatory filings, analyst reports, and financial news sources.
-3. You MUST focus on quantitative metrics and qualitative factors that impact investment decisions.
-4. You MUST generate queries targeting specific financial data, ratios, growth metrics, and market indicators.
-5. You MUST include recent developments, quarterly results, guidance updates, and management commentary.
-6. You MUST analyze both bull and bear cases for the investment thesis.
-7. You MUST consider macro-economic factors, sector trends, and competitive dynamics.
-8. You MUST ensure all queries target credible financial and business sources.
-9. You MUST focus on information relevant to investment decision-making.
-
----
-
-## INVESTMENT RESEARCH FRAMEWORK
-
-### Financial Performance Analysis
-- Revenue growth, profitability metrics, margins analysis
-- Balance sheet strength, debt levels, cash flow generation
-- Return ratios (ROE, ROA, ROIC), efficiency metrics
-
-### Business Fundamentals
-- Business model sustainability and competitive advantages
-- Market share, industry position, competitive landscape
-- Management quality, corporate governance, strategic vision
-
-### Growth & Valuation Analysis
-- Growth drivers, expansion plans, market opportunities
-- Valuation metrics (P/E, P/B, EV/EBITDA, PEG ratio)
-- Peer comparison and relative valuation
-
-### Risk Assessment
-- Business risks, regulatory risks, market risks
-- Financial risks, operational risks, ESG factors
-- Scenario analysis and stress testing
+Target financial databases, exchanges, analyst reports, and credible business sources.
 
 ---
 
