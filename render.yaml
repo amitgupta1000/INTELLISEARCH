@@ -25,6 +25,6 @@ services:
     startCommand: "cd web-app/frontend && npm run preview"
     envVars:
       - key: VITE_API_URL
-        value: https://intellisearch-backend.onrender.com
+        value: https://intellisearch-backend-fwwr.onrender.com
       - key: NODE_ENV
         value: production
