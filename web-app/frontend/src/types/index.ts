@@ -15,10 +15,21 @@ export interface ResearchResult {
   timestamp: string;
 }
 
+export interface ActivityLog {
+  id: string;
+  timestamp: string;
+  level: 'info' | 'success' | 'warning' | 'error';
+  message: string;
+  details?: any;
+}
+
 export interface ResearchState {
   isLoading: boolean;
   result: ResearchResult | null;
   error: string | null;
+  logs: ActivityLog[];
+  progress: number;
+  currentStep: string;
 }
 
 export interface Citation {
